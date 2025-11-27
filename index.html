@@ -21,9 +21,10 @@
     input, select { width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; }
     .toggle { margin: 1rem 0; }
     button { background: #1890ff; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 4px; cursor: pointer; font-size: 1.1em; }
+    button.secondary { background: #52c41a; margin-left: 0.5rem; }
     .result { background: #e6f7ff; border-left: 4px solid #1890ff; padding: 1rem; margin: 1.5rem 0; border-radius: 4px; }
     .warnings { color: #fa8c16; margin-top: 1rem; }
-    .json-output { background: #f5f5f5; padding: 1rem; border-radius: 4px; overflow-x: auto; font-family: monospace; font-size: 0.9em; }
+    .json-output { background: #f5f5f5; padding: 1rem; border-radius: 4px; overflow-x: auto; font-family: monospace; font-size: 0.9em; margin-top: 1rem; }
   </style>
 </head>
 <body>
@@ -182,12 +183,14 @@
   </div>
 
   <button type="button" onclick="calculate()" data-i18n="estimateButton">Estimer les crédits</button>
+  <button type="button" class="secondary" id="exportBtn" onclick="toggleJSON()" style="display:none;" data-i18n="exportButton">📋 Export JSON</button>
 
   <div id="output"></div>
   <div id="jsonOutput" class="json-output" style="display:none;"></div>
 
   <script>
     let lang = 'fr';
+    let lastCalculationData = null;
 
     const translations = {
       en: {
@@ -230,6 +233,7 @@
         rrspContribution: "RRSP Contribution ($)",
         hintRRSP: "Maximum: $31,560 (2025 limit)",
         estimateButton: "Estimate Credits",
+        exportButton: "📋 Export JSON",
         resultTitle: "🧾 Quebec + Federal Estimate (2025)",
         grossIncome: "💼 Gross income",
         afterRRSP: "📉 After RRSP",
@@ -242,9 +246,8 @@
         cwb: "💵 CWB",
         totalBenefit: "🎯 Total benefit",
         cashRefund: "💸 Cash refund",
-        warnings: "⚠️ Warnings:",
-        warningUnionDues: "Union dues missing — may be deductible",
-        warningSIN: "SIN missing — required"
+        warnings: "💡 Tips to increase your refund:",
+        warningUnionDues: "Add union dues (Case F) — could save $30-150 in taxes"
       },
       fr: {
         title: "💰 TaxSyncQC — Estimation officielle Québec 2025",
@@ -286,6 +289,7 @@
         rrspContribution: "Contribution RRSP ($)",
         hintRRSP: "Maximum : 31 560 $ (limite 2025)",
         estimateButton: "Estimer les crédits",
+        exportButton: "📋 Exporter JSON",
         resultTitle: "🧾 Estimation Québec + Fédéral (2025)",
         grossIncome: "💼 Revenu brut",
         afterRRSP: "📉 Après RRSP",
@@ -298,9 +302,8 @@
         cwb: "💵 PTE",
         totalBenefit: "🎯 Avantage total",
         cashRefund: "💸 Remboursement",
-        warnings: "⚠️ Avertissements :",
-        warningUnionDues: "Cotisations syndicales manquantes — peuvent être déductibles",
-        warningSIN: "NAS manquant — obligatoire"
+        warnings: "💡 Conseils pour augmenter votre remboursement :",
+        warningUnionDues: "Ajoutez vos cotisations syndicales (Case F) — pourrait économiser 30-150 $ d'impôt"
       }
     };
 
@@ -324,7 +327,7 @@
       ['rl1Deductions', 'rl1Benefits', 't4Deductions', 't4Benefits'].forEach(id => {
         document.getElementById(id).style.display = advanced ? 'block' : 'none';
       });
-      document.getElementById('jsonOutput').style.display = advanced ? 'block' : 'none';
+      document.getElementById('exportBtn').style.display = advanced && lastCalculationData ? 'inline-block' : 'none';
     }
 
     function showTab(tabId) {
@@ -333,6 +336,17 @@
       });
       document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
       event.target.classList.add('active');
+    }
+
+    function toggleJSON() {
+      const jsonDiv = document.getElementById('jsonOutput');
+      if (jsonDiv.style.display === 'none') {
+        jsonDiv.style.display = 'block';
+        document.getElementById('exportBtn').textContent = '✖️ ' + (lang === 'fr' ? 'Fermer JSON' : 'Close JSON');
+      } else {
+        jsonDiv.style.display = 'none';
+        document.getElementById('exportBtn').innerHTML = _('exportButton');
+      }
     }
 
     function getFormData() {
@@ -382,7 +396,6 @@
       const data = getFormData();
       const income = data.source === 'RL-1' ? data.rl1.A : data.t4['14'];
       const unionDues = data.source === 'RL-1' ? data.rl1.F : data.t4['44'];
-      const sin = data.source === 'RL-1' ? data.rl1.sin : data.t4.sin;
       const rrsp = parseFloat(document.getElementById('rrspInput').value) || 0;
       const effectiveIncome = Math.max(0, income - rrsp);
 
@@ -418,9 +431,12 @@
         <p style="font-size: 1.2em; color: #1890ff;"><strong>${_('cashRefund')}: $${cashBack.toFixed(2)}</strong></p>
       </div>`;
 
+      // Smart warnings - only show if they save real money
       const warnings = [];
-      if (unionDues === null) warnings.push(_('warningUnionDues'));
-      if (!sin || !/\d{9}/.test(sin.replace(/\D/g, ''))) warnings.push(_('warningSIN'));
+      if (unionDues === null && income > 30000) {
+        warnings.push(_('warningUnionDues'));
+      }
+
       if (warnings.length > 0) {
         html += `<div class="warnings"><strong>${_('warnings')}</strong><ul>`;
         warnings.forEach(w => html += `<li>${w}</li>`);
@@ -429,18 +445,23 @@
 
       document.getElementById('output').innerHTML = html;
 
-      if (document.getElementById('modeToggle').checked) {
-        const exportData = {
-          ...data,
-          analysis: {
-            effectiveIncome,
-            qcCredits: { solidarity, workPremium },
-            fedCredits: { bpaSavings, cwb },
-            rrspImpact: { contribution: rrsp, taxSaved }
-          }
-        };
-        document.getElementById('jsonOutput').textContent = JSON.stringify(exportData, null, 2);
-      }
+      // Store calculation data for export
+      lastCalculationData = {
+        ...data,
+        analysis: {
+          effectiveIncome,
+          qcCredits: { solidarity, workPremium },
+          fedCredits: { bpaSavings, cwb },
+          rrspImpact: { contribution: rrsp, taxSaved }
+        }
+      };
+
+      // Show export button if in advanced mode
+      document.getElementById('exportBtn').style.display = document.getElementById('modeToggle').checked ? 'inline-block' : 'none';
+      
+      // Pre-fill JSON but keep hidden
+      document.getElementById('jsonOutput').textContent = JSON.stringify(lastCalculationData, null, 2);
+      document.getElementById('jsonOutput').style.display = 'none';
     }
 
     setLang('fr');
