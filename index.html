@@ -3,133 +3,144 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>TaxSyncQC</title>
+  <title>TaxSyncQC — Estimateur d'impôt Québec</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: system-ui; max-width: 700px; margin: 0 auto; padding: 1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
-    .container { background: white; border-radius: 12px; padding: 2rem; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
-    h1 { color: #667eea; font-size: 1.75rem; margin-bottom: 0.5rem; }
-    .tabs { display: flex; gap: 1rem; margin: 1.5rem 0; border-bottom: 2px solid #eee; }
-    .tab { padding: 0.75rem 1.5rem; cursor: pointer; border: none; background: none; font-size: 1rem; font-weight: 600; color: #999; }
-    .tab.active { color: #667eea; border-bottom: 3px solid #667eea; margin-bottom: -2px; }
-    .form-section { display: none; }
-    .form-section.active { display: block; }
-    .form-row { display: grid; grid-template-columns: 100px 1fr; gap: 1rem; align-items: center; margin: 1rem 0; padding: 1rem; background: #f8f9fa; border-radius: 6px; }
-    .form-row label { font-weight: 600; color: #333; font-size: 0.9rem; }
-    .form-row input { padding: 0.6rem; border: 2px solid #ddd; border-radius: 6px; font-size: 1rem; width: 100%; }
-    .form-row input:focus { border-color: #667eea; outline: none; }
-    .form-row .helper { grid-column: 2; font-size: 0.85rem; color: #666; margin-top: -0.5rem; }
-    button.primary { background: #667eea; color: white; border: none; padding: 1rem 2rem; border-radius: 6px; cursor: pointer; font-size: 1rem; font-weight: 600; width: 100%; margin-top: 1rem; }
-    button.primary:hover { background: #5568d3; }
-    button.secondary { background: #e0e0e0; color: #333; border: none; padding: 0.75rem; border-radius: 6px; cursor: pointer; width: 100%; margin-top: 0.5rem; }
-    .result { background: #e6f7ff; border-left: 4px solid #1890ff; padding: 1.5rem; margin: 1.5rem 0; border-radius: 6px; display: none; }
+    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 600px; margin: 1rem auto; padding: 0 1rem; line-height: 1.6; }
     .lang-toggle { text-align: right; margin-bottom: 1rem; }
-    .lang-toggle button { border: none; background: none; cursor: pointer; padding: 0.5rem 1rem; font-weight: 600; }
+    .tab { display: flex; margin-bottom: 1rem; }
+    .tab button {
+      padding: 0.5rem 1rem; background: #eee; border: 1px solid #ccc; flex: 1;
+    }
+    .tab .active { background: #1890ff; color: white; }
+    .input-group { margin-bottom: 1rem; }
+    label { display: block; margin-bottom: 0.25rem; font-weight: bold; }
+    input { width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; }
+    .hint { font-size: 0.85rem; color: #666; margin-top: 0.25rem; }
+    .rrsp-slider { margin: 1.5rem 0; }
+    button.primary { background: #1890ff; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 4px; cursor: pointer; }
+    .result { background: #e6f7ff; border-left: 4px solid #1890ff; padding: 1rem; margin: 1rem 0; border-radius: 4px; }
+    .warnings { color: #fa8c16; margin-top: 1rem; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="lang-toggle">
-      <button onclick="setLang('en')" id="btn-en">EN</button>
-      <button onclick="setLang('fr')" id="btn-fr">FR</button>
-    </div>
-
-    <h1 id="title">💰 TaxSyncQC</h1>
-    <p id="subtitle">Quebec + Federal tax estimator 2025</p>
-
-    <div class="tabs">
-      <button class="tab active" onclick="showTab('rl1')">RL-1 (QC)</button>
-      <button class="tab" onclick="showTab('t4')">T4 (Federal)</button>
-    </div>
-
-    <div id="rl1-section" class="form-section active">
-      <div class="form-row">
-        <label>Line A</label>
-        <input type="number" id="rl1-a" placeholder="35000" min="0">
-        <div class="helper" id="rl1-a-help">Employment income</div>
-      </div>
-      <div class="form-row">
-        <label>Line C</label>
-        <input type="number" id="rl1-c" placeholder="2120" min="0">
-        <div class="helper" id="rl1-c-help">QPP contributions</div>
-      </div>
-      <div class="form-row">
-        <label>Line D</label>
-        <input type="number" id="rl1-d" placeholder="230" min="0">
-        <div class="helper" id="rl1-d-help">QPIP premiums</div>
-      </div>
-      <div class="form-row">
-        <label>Line L</label>
-        <input type="number" id="rl1-l" placeholder="300" min="0">
-        <div class="helper" id="rl1-l-help">Union dues (optional)</div>
-      </div>
-    </div>
-
-    <div id="t4-section" class="form-section">
-      <div class="form-row">
-        <label>Box 14</label>
-        <input type="number" id="t4-14" placeholder="35000" min="0">
-        <div class="helper" id="t4-14-help">Employment income</div>
-      </div>
-      <div class="form-row">
-        <label>Box 16</label>
-        <input type="number" id="t4-16" placeholder="2120" min="0">
-        <div class="helper" id="t4-16-help">CPP contributions</div>
-      </div>
-      <div class="form-row">
-        <label>Box 18</label>
-        <input type="number" id="t4-18" placeholder="630" min="0">
-        <div class="helper" id="t4-18-help">EI premiums</div>
-      </div>
-      <div class="form-row">
-        <label>Box 44</label>
-        <input type="number" id="t4-44" placeholder="300" min="0">
-        <div class="helper" id="t4-44-help">Union dues (optional)</div>
-      </div>
-    </div>
-
-    <button class="primary" onclick="estimate()">Calculate Refund</button>
-    <button class="secondary" onclick="clearForm()">Clear</button>
-
-    <div id="output"></div>
+  <div class="lang-toggle">
+    <button onclick="setLang('en')" id="btn-en">EN</button>
+    <button onclick="setLang('fr')" id="btn-fr">FR</button>
   </div>
 
+  <h1 id="title">💰 TaxSyncQC</h1>
+  <p id="subtitle"><strong>Estimateur officiel Québec 2025</strong></p>
+
+  <div class="tab">
+    <button class="active" onclick="showTab('rl1')">RL-1 (Revenu Québec)</button>
+    <button onclick="showTab('t4')">T4 (CRA)</button>
+  </div>
+
+  <form id="rl1-form" style="display:block;">
+    <div class="input-group">
+      <label id="l-boxA">RL-1 Box A (Line 101)</label>
+      <input type="number" id="boxA" placeholder="Ex: 60000" step="100">
+      <div class="hint" id="h-boxA">Revenu d'emploi avant retenues — top left on RL-1</div>
+    </div>
+    <div class="input-group">
+      <label id="l-boxF">RL-1 Box F (Line 397.1)</label>
+      <input type="number" id="boxF" placeholder="Ex: 400" step="1">
+      <div class="hint" id="h-boxF">Cotisations syndicales</div>
+    </div>
+    <div class="input-group">
+      <label id="l-sin">SIN / NAS</label>
+      <input type="text" id="sin" placeholder="Ex: 123 456 789" maxlength="11">
+      <div class="hint" id="h-sin">9 chiffres, souvent près du nom de l'employeur</div>
+    </div>
+  </form>
+
+  <form id="t4-form" style="display:none;">
+    <div class="input-group">
+      <label id="l-box14">T4 Box 14 (Line 10100)</label>
+      <input type="number" id="box14" placeholder="Ex: 60000" step="100">
+      <div class="hint" id="h-box14">Revenus d'emploi — center-left on T4</div>
+    </div>
+    <div class="input-group">
+      <label id="l-box44">T4 Box 44 (Line 21200)</label>
+      <input type="number" id="box44" placeholder="Ex: 400" step="1">
+      <div class="hint" id="h-box44">Cotisations syndicales</div>
+    </div>
+    <div class="input-group">
+      <label id="l-sin2">SIN / NAS</label>
+      <input type="text" id="sin2" placeholder="Ex: 123-456-789" maxlength="11">
+      <div class="hint" id="h-sin2">Top-left corner</div>
+    </div>
+  </form>
+
+  <div class="rrsp-slider">
+    <label id="l-rrsp">Contribution RRSP / RRSP Contribution ($)</label>
+    <input type="range" id="rrspSlider" min="0" max="31560" value="0" step="100">
+    <div id="rrspValue">$0</div>
+  </div>
+
+  <button type="button" class="primary" onclick="calculate()">Estimer / Estimate</button>
+
+  <div id="output"></div>
+
   <script>
+    let lang = 'fr';
     const translations = {
       en: {
-        title: "💰 TaxSyncQC",
-        subtitle: "Quebec + Federal tax estimator 2025",
-        rl1A: "Employment income",
-        rl1C: "QPP contributions",
-        rl1D: "QPIP premiums",
-        rl1L: "Union dues (optional)",
-        t414: "Employment income",
-        t416: "CPP contributions",
-        t418: "EI premiums",
-        t444: "Union dues (optional)",
-        calculate: "Calculate Refund",
-        clear: "Clear",
-        invalidIncome: "❌ Enter income (Line A or Box 14)"
+        title: "💰 TaxSyncQC — Quebec Tax Estimator",
+        subtitle: "Official 2025 estimator (RL-1 & T4)",
+        l_boxA: "RL-1 Box A (Line 101)",
+        h_boxA: "Employment income — top left on RL-1",
+        l_boxF: "RL-1 Box F (Line 397.1)",
+        h_boxF: "Union dues",
+        l_box14: "T4 Box 14 (Line 10100)",
+        h_box14: "Employment income — center-left on T4",
+        l_box44: "T4 Box 44 (Line 21200)",
+        h_box44: "Union dues",
+        l_sin: "SIN / SIN",
+        h_sin: "9 digits, near employer name",
+        l_rrsp: "RRSP Contribution ($)",
+        estimateBtn: "Estimate",
+        resultTitle: "🧾 Quebec + Federal Estimate (2025)",
+        income: "Income",
+        solidarity: "Solidarity Credit",
+        workPremium: "Work Premium",
+        bpaSavings: "BPA Savings",
+        cwb: "CWB (cash)",
+        totalBenefit: "Total Benefit",
+        cashBack: "Cash Back",
+        warnings: "⚠️ Warnings:",
+        missingUnionDues: "Union dues missing — may be deductible",
+        missingSIN: "SIN missing — required for filing"
       },
       fr: {
-        title: "💰 TaxSyncQC",
-        subtitle: "Estimateur Québec + Fédéral 2025",
-        rl1A: "Revenu d'emploi",
-        rl1C: "Cotisations RRQ",
-        rl1D: "Cotisations RQAP",
-        rl1L: "Cotisations syndicales (optionnel)",
-        t414: "Revenu d'emploi",
-        t416: "Cotisations RPC",
-        t418: "Cotisations AE",
-        t444: "Cotisations syndicales (optionnel)",
-        calculate: "Calculer remboursement",
-        clear: "Effacer",
-        invalidIncome: "❌ Entrez revenu (Ligne A ou Case 14)"
+        title: "💰 TaxSyncQC — Estimateur d'impôt Québec",
+        subtitle: "Estimateur officiel 2025 (RL-1 et T4)",
+        l_boxA: "RL-1 Case A (Ligne 101)",
+        h_boxA: "Revenu d'emploi avant retenues — en haut à gauche",
+        l_boxF: "RL-1 Case F (Ligne 397.1)",
+        h_boxF: "Cotisations syndicales",
+        l_box14: "T4 Case 14 (Ligne 10100)",
+        h_box14: "Revenus d'emploi — centre-gauche sur T4",
+        l_box44: "T4 Case 44 (Ligne 21200)",
+        h_box44: "Cotisations syndicales",
+        l_sin: "SIN / NAS",
+        h_sin: "9 chiffres, souvent près du nom de l'employeur",
+        l_rrsp: "Contribution RRSP ($)",
+        estimateBtn: "Estimer",
+        resultTitle: "🧾 Estimation Québec + Fédéral (2025)",
+        income: "Revenu",
+        solidarity: "Crédit solidarité",
+        workPremium: "Prime au travail",
+        bpaSavings: "Économies BPA",
+        cwb: "PTE (argent)",
+        totalBenefit: "Avantage total",
+        cashBack: "Remboursement",
+        warnings: "⚠️ Avertissements :",
+        missingUnionDues: "Cotisations syndicales manquantes — peuvent être déductibles",
+        missingSIN: "NAS manquant — obligatoire pour la déclaration"
       }
     };
 
-    let lang = 'en';
-    let activeTab = 'rl1';
     const _ = (key) => translations[lang][key] || key;
 
     function setLang(newLang) {
@@ -139,89 +150,102 @@
       updateUI();
     }
 
-    function showTab(tab) {
-      activeTab = tab;
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
-      event.target.classList.add('active');
-      document.getElementById(tab + '-section').classList.add('active');
-    }
-
     function updateUI() {
-      document.getElementById('title').textContent = _('title');
-      document.getElementById('subtitle').textContent = _('subtitle');
-      document.getElementById('rl1-a-help').textContent = _('rl1A');
-      document.getElementById('rl1-c-help').textContent = _('rl1C');
-      document.getElementById('rl1-d-help').textContent = _('rl1D');
-      document.getElementById('rl1-l-help').textContent = _('rl1L');
-      document.getElementById('t4-14-help').textContent = _('t414');
-      document.getElementById('t4-16-help').textContent = _('t416');
-      document.getElementById('t4-18-help').textContent = _('t418');
-      document.getElementById('t4-44-help').textContent = _('t444');
+      document.getElementById('title').textContent = _( 'title' );
+      document.getElementById('subtitle').textContent = _( 'subtitle' );
+      document.getElementById('l-boxA').textContent = _( 'l_boxA' );
+      document.getElementById('h-boxA').textContent = _( 'h_boxA' );
+      document.getElementById('l-boxF').textContent = _( 'l_boxF' );
+      document.getElementById('h-boxF').textContent = _( 'h_boxF' );
+      document.getElementById('l-box14').textContent = _( 'l_box14' );
+      document.getElementById('h-box14').textContent = _( 'h_box14' );
+      document.getElementById('l-box44').textContent = _( 'l_box44' );
+      document.getElementById('h-box44').textContent = _( 'h_box44' );
+      document.getElementById('l-sin').textContent = _( 'l_sin' );
+      document.getElementById('h-sin').textContent = _( 'h_sin' );
+      document.getElementById('l-sin2').textContent = _( 'l_sin' );
+      document.getElementById('h-sin2').textContent = _( 'h_sin' );
+      document.getElementById('l-rrsp').textContent = _( 'l_rrsp' );
+      document.querySelector('.primary').textContent = _( 'estimateBtn' );
     }
 
-    function clearForm() {
-      document.querySelectorAll('input').forEach(i => i.value = '');
-      document.getElementById('output').innerHTML = '';
+    function showTab(tabId) {
+      document.getElementById('rl1-form').style.display = tabId === 'rl1' ? 'block' : 'none';
+      document.getElementById('t4-form').style.display = tabId === 't4' ? 'block' : 'none';
+      document.querySelectorAll('.tab button').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
     }
 
-    function calculateSolidarity(income) {
-      const BASE = 531, START = 57965, END = 64125;
-      let amt = BASE;
-      if (income > START) amt = income >= END ? 0 : amt * (1 - (income - START) / (END - START));
-      return Math.round(amt * 100) / 100;
-    }
+    document.getElementById('rrspSlider').addEventListener('input', function() {
+      document.getElementById('rrspValue').textContent = `$${this.value}`;
+    });
 
-    function calculateWorkPremium(income) {
-      if (income < 7200) return 0;
-      return Math.min(Math.round(Math.min(income - 7200, 33100) * 0.26 * 100) / 100, 728);
-    }
+    function calculate() {
+      let income, unionDues, sin;
+      const isRL1 = document.getElementById('rl1-form').style.display === 'block';
 
-    function estimateFederal(income) {
-      let cwb = 0;
-      if (income <= 25539) cwb = Math.min(income * 0.27, 1519);
-      else if (income <= 35539) cwb = Math.max(0, 1519 - (income - 25539) * 0.15);
-      const bpa = Math.max(0, 15705 - Math.max(0, income - 165430) * 15705 / 70000);
-      return { cwb: Math.round(cwb * 100) / 100, bpaSavings: Math.round(bpa * 0.15 * 100) / 100 };
-    }
-
-    function estimate() {
-      let income = 0;
-      if (activeTab === 'rl1') {
-        income = parseFloat(document.getElementById('rl1-a').value) || 0;
+      if (isRL1) {
+        income = parseFloat(document.getElementById('boxA').value) || 0;
+        unionDues = parseFloat(document.getElementById('boxF').value) || null;
+        sin = document.getElementById('sin').value;
       } else {
-        income = parseFloat(document.getElementById('t4-14').value) || 0;
+        income = parseFloat(document.getElementById('box14').value) || 0;
+        unionDues = parseFloat(document.getElementById('box44').value) || null;
+        sin = document.getElementById('sin2').value;
       }
 
-      if (!income) {
-        document.getElementById('output').innerHTML = `<p style="color:red">${_('invalidIncome')}</p>`;
-        return;
-      }
+      const rrsp = parseFloat(document.getElementById('rrspSlider').value) || 0;
+      const effectiveIncome = Math.max(0, income - rrsp);
 
-      const qc = { solidarity: calculateSolidarity(income), workPremium: calculateWorkPremium(income) };
-      const fed = estimateFederal(income);
-      const qcTotal = qc.solidarity + qc.workPremium;
-      const totalBenefit = qcTotal + fed.bpaSavings + fed.cwb;
-      const cashBack = qc.workPremium + fed.cwb;
+      // QC credits
+      const solidarity = effectiveIncome <= 57965 ? 531 : Math.max(0, 531 * (1 - (effectiveIncome - 57965) / 6160));
+      const workPremium = effectiveIncome < 7200 ? 0 : Math.min(728, Math.min(effectiveIncome - 7200, 33100) * 0.26);
 
-      document.getElementById('output').innerHTML = `<div class="result" style="display:block;">
-        <h3>🧾 ${lang === 'fr' ? 'Estimation 2025' : 'Estimate 2025'}</h3>
-        <p><strong>💼 ${lang === 'fr' ? 'Revenu' : 'Income'}: $${income.toLocaleString()}</strong></p>
+      // Fed credits
+      const cwb = effectiveIncome <= 25539 ? Math.min(effectiveIncome * 0.27, 1519) : 
+                 effectiveIncome <= 35539 ? Math.max(0, 1519 - (effectiveIncome - 25539) * 0.15) : 0;
+      const bpa = Math.max(0, 15705 - Math.max(0, effectiveIncome - 165430) * 15705 / 70000);
+      const bpaSavings = bpa * 0.15;
+
+      // RRSP tax saved
+      const marginalRate = income <= 51268 ? 0.2885 : income <= 57965 ? 0.3325 : 0.3885;
+      const taxSaved = rrsp * marginalRate;
+
+      const qcTotal = solidarity + workPremium;
+      const fedTotal = bpaSavings + cwb;
+      const totalBenefit = qcTotal + fedTotal + taxSaved;
+      const cashBack = workPremium + cwb;
+
+      let html = `<div class="result">
+        <h3>${_( 'resultTitle' )}</h3>
+        <p><strong>💼 ${_( 'income' )}: $${income.toLocaleString()}</strong></p>
+        ${rrsp > 0 ? `<p>📉 Après RRSP ($${rrsp}): $${effectiveIncome.toLocaleString()}</p>` : ''}
+        ${rrsp > 0 ? `<p>💰 Économie d'impôt: $${taxSaved.toFixed(2)}</p>` : ''}
         <h4>🇶🇨 Québec</h4>
-        <p>💰 ${lang === 'fr' ? 'Crédit solidarité' : 'Solidarity'}: $${qc.solidarity}</p>
-        <p>👷 ${lang === 'fr' ? 'Prime travail' : 'Work Premium'}: $${qc.workPremium}</p>
-        <p><strong>✅ Total QC: $${qcTotal.toFixed(2)}</strong></p>
-        <h4>🇨🇦 ${lang === 'fr' ? 'Fédéral' : 'Federal'}</h4>
-        <p>🛡️ BPA: $${fed.bpaSavings}</p>
-        <p>💵 ${lang === 'fr' ? 'PTE' : 'CWB'}: $${fed.cwb}</p>
-        <p><strong>✅ Total Fed: $${(fed.bpaSavings + fed.cwb).toFixed(2)}</strong></p>
-        <hr style="margin: 1rem 0; border: none; border-top: 2px solid #ddd;">
-        <p><strong>🎯 ${lang === 'fr' ? 'Avantage total' : 'Total Benefit'}: $${totalBenefit.toFixed(2)}</strong></p>
-        <p style="font-size: 1.25rem; color: #667eea;"><strong>💸 ${lang === 'fr' ? 'Remboursement' : 'Cash Back'}: $${cashBack.toFixed(2)}</strong></p>
+        <p>💰 ${_( 'solidarity' )}: $${solidarity.toFixed(2)}</p>
+        <p>👷 ${_( 'workPremium' )}: $${workPremium.toFixed(2)}</p>
+        <h4>🇨🇦 Fédéral</h4>
+        <p>🛡️ ${_( 'bpaSavings' )}: $${bpaSavings.toFixed(2)}</p>
+        <p>💵 ${_( 'cwb' )}: $${cwb.toFixed(2)}</p>
+        <hr style="margin: 1rem 0; border: none; border-top: 1px solid #ddd;">
+        <p><strong>🎯 ${_( 'totalBenefit' )}: $${totalBenefit.toFixed(2)}</strong></p>
+        <p style="font-size: 1.2em; color: #1890ff;"><strong>💸 ${_( 'cashBack' )}: $${cashBack.toFixed(2)}</strong></p>
       </div>`;
+
+      const warnings = [];
+      if (unionDues === null || isNaN(unionDues)) warnings.push(_( 'missingUnionDues' ));
+      if (!sin || !/\d{9}/.test(sin.replace(/\D/g, ''))) warnings.push(_( 'missingSIN' ));
+      if (warnings.length > 0) {
+        html += `<div class="warnings"><strong>${_( 'warnings' )}</strong><ul>`;
+        warnings.forEach(w => html += `<li>${w}</li>`);
+        html += '</ul></div>';
+      }
+
+      document.getElementById('output').innerHTML = html;
     }
 
-    updateUI();
+    // Init
+    setLang('fr');
   </script>
 </body>
 </html>
