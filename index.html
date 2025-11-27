@@ -3,21 +3,28 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>TaxSyncQC — Estimateur d'impôt Québec</title>
+  <title>TaxSyncQC</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 600px; margin: 2rem auto; padding: 0 1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui; max-width: 700px; margin: 0 auto; padding: 1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
     .container { background: white; border-radius: 12px; padding: 2rem; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
-    h1 { color: #667eea; margin: 0 0 0.5rem 0; }
-    .drop { border: 2px dashed #ccc; border-radius: 8px; padding: 2rem; text-align: center; margin: 1rem 0; background: #fafafa; transition: all 0.3s; }
-    .drop:hover { border-color: #667eea; background: #f0f4ff; }
-    .result { background: #e6f7ff; border-left: 4px solid #1890ff; padding: 1rem; margin: 1rem 0; border-radius: 4px; display: none; }
-    .lang-toggle { text-align: right; margin-bottom: 1rem; }
-    .lang-toggle button { border: none; background: none; cursor: pointer; padding: 0.5rem 1rem; font-size: 14px; }
-    .warning { color: #fa8c16; }
-    button.primary { background: #667eea; color: white; border: none; padding: 0.75rem 2rem; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: 600; }
+    h1 { color: #667eea; font-size: 1.75rem; margin-bottom: 0.5rem; }
+    .tabs { display: flex; gap: 1rem; margin: 1.5rem 0; border-bottom: 2px solid #eee; }
+    .tab { padding: 0.75rem 1.5rem; cursor: pointer; border: none; background: none; font-size: 1rem; font-weight: 600; color: #999; }
+    .tab.active { color: #667eea; border-bottom: 3px solid #667eea; margin-bottom: -2px; }
+    .form-section { display: none; }
+    .form-section.active { display: block; }
+    .form-row { display: grid; grid-template-columns: 100px 1fr; gap: 1rem; align-items: center; margin: 1rem 0; padding: 1rem; background: #f8f9fa; border-radius: 6px; }
+    .form-row label { font-weight: 600; color: #333; font-size: 0.9rem; }
+    .form-row input { padding: 0.6rem; border: 2px solid #ddd; border-radius: 6px; font-size: 1rem; width: 100%; }
+    .form-row input:focus { border-color: #667eea; outline: none; }
+    .form-row .helper { grid-column: 2; font-size: 0.85rem; color: #666; margin-top: -0.5rem; }
+    button.primary { background: #667eea; color: white; border: none; padding: 1rem 2rem; border-radius: 6px; cursor: pointer; font-size: 1rem; font-weight: 600; width: 100%; margin-top: 1rem; }
     button.primary:hover { background: #5568d3; }
-    button.secondary { background: #e0e0e0; color: #333; border: none; padding: 0.75rem 1.5rem; border-radius: 6px; cursor: pointer; margin-left: 0.5rem; }
-    textarea { width: 100%; border: 1px solid #ddd; border-radius: 6px; padding: 0.75rem; font-family: monospace; font-size: 14px; }
+    button.secondary { background: #e0e0e0; color: #333; border: none; padding: 0.75rem; border-radius: 6px; cursor: pointer; width: 100%; margin-top: 0.5rem; }
+    .result { background: #e6f7ff; border-left: 4px solid #1890ff; padding: 1.5rem; margin: 1.5rem 0; border-radius: 6px; display: none; }
+    .lang-toggle { text-align: right; margin-bottom: 1rem; }
+    .lang-toggle button { border: none; background: none; cursor: pointer; padding: 0.5rem 1rem; font-weight: 600; }
   </style>
 </head>
 <body>
@@ -27,19 +34,61 @@
       <button onclick="setLang('fr')" id="btn-fr">FR</button>
     </div>
 
-    <h1 id="title">💰 TaxSyncQC — Quebec Tax Estimator</h1>
-    <p id="subtitle"><strong>Quebec 2025 tax credit estimator</strong></p>
+    <h1 id="title">💰 TaxSyncQC</h1>
+    <p id="subtitle">Quebec + Federal tax estimator 2025</p>
 
-    <div class="drop" id="dropZone">
-      📄 Drop RL-1 PDF here<br>or<br>
-      <input type="file" id="fileInput" accept=".pdf,.txt" style="display:none"/>
-      <button onclick="document.getElementById('fileInput').click()">Choose File</button>
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('rl1')">RL-1 (QC)</button>
+      <button class="tab" onclick="showTab('t4')">T4 (Federal)</button>
     </div>
 
-    <p id="paste-label">Or paste RL-1 text:</p>
-    <textarea id="textInput" rows="6" placeholder="Case A: 35000&#10;Case C: 2120&#10;Case L: 300"></textarea>
-    <br><br>
-    <button class="primary" onclick="estimate()">Estimate Refund</button>
+    <div id="rl1-section" class="form-section active">
+      <div class="form-row">
+        <label>Line A</label>
+        <input type="number" id="rl1-a" placeholder="35000" min="0">
+        <div class="helper" id="rl1-a-help">Employment income</div>
+      </div>
+      <div class="form-row">
+        <label>Line C</label>
+        <input type="number" id="rl1-c" placeholder="2120" min="0">
+        <div class="helper" id="rl1-c-help">QPP contributions</div>
+      </div>
+      <div class="form-row">
+        <label>Line D</label>
+        <input type="number" id="rl1-d" placeholder="230" min="0">
+        <div class="helper" id="rl1-d-help">QPIP premiums</div>
+      </div>
+      <div class="form-row">
+        <label>Line L</label>
+        <input type="number" id="rl1-l" placeholder="300" min="0">
+        <div class="helper" id="rl1-l-help">Union dues (optional)</div>
+      </div>
+    </div>
+
+    <div id="t4-section" class="form-section">
+      <div class="form-row">
+        <label>Box 14</label>
+        <input type="number" id="t4-14" placeholder="35000" min="0">
+        <div class="helper" id="t4-14-help">Employment income</div>
+      </div>
+      <div class="form-row">
+        <label>Box 16</label>
+        <input type="number" id="t4-16" placeholder="2120" min="0">
+        <div class="helper" id="t4-16-help">CPP contributions</div>
+      </div>
+      <div class="form-row">
+        <label>Box 18</label>
+        <input type="number" id="t4-18" placeholder="630" min="0">
+        <div class="helper" id="t4-18-help">EI premiums</div>
+      </div>
+      <div class="form-row">
+        <label>Box 44</label>
+        <input type="number" id="t4-44" placeholder="300" min="0">
+        <div class="helper" id="t4-44-help">Union dues (optional)</div>
+      </div>
+    </div>
+
+    <button class="primary" onclick="estimate()">Calculate Refund</button>
     <button class="secondary" onclick="clearForm()">Clear</button>
 
     <div id="output"></div>
@@ -48,48 +97,39 @@
   <script>
     const translations = {
       en: {
-        title: "💰 TaxSyncQC — Quebec Tax Estimator",
-        subtitle: "Quebec 2025 tax credit estimator",
-        pasteLabel: "Or paste RL-1 text:",
-        estimateBtn: "Estimate Refund",
-        clearBtn: "Clear",
-        income: "Income",
-        solidarity: "Solidarity Credit",
-        workPremium: "Work Premium",
-        bpaSavings: "BPA Savings",
-        cwb: "CWB (cash)",
-        qcTotal: "QC Total",
-        fedTotal: "Fed Total",
-        totalBenefit: "Total Benefit",
-        cashBack: "Cash Back",
-        warnings: "⚠️ Warnings:",
-        missingUnionDues: "Union dues (Case L) missing",
-        missingSIN: "SIN missing",
-        invalidRL1: "❌ Invalid RL-1 — check Case A"
+        title: "💰 TaxSyncQC",
+        subtitle: "Quebec + Federal tax estimator 2025",
+        rl1A: "Employment income",
+        rl1C: "QPP contributions",
+        rl1D: "QPIP premiums",
+        rl1L: "Union dues (optional)",
+        t414: "Employment income",
+        t416: "CPP contributions",
+        t418: "EI premiums",
+        t444: "Union dues (optional)",
+        calculate: "Calculate Refund",
+        clear: "Clear",
+        invalidIncome: "❌ Enter income (Line A or Box 14)"
       },
       fr: {
-        title: "💰 TaxSyncQC — Estimateur Québec",
-        subtitle: "Estimateur crédits 2025",
-        pasteLabel: "Ou collez RL-1:",
-        estimateBtn: "Estimer",
-        clearBtn: "Effacer",
-        income: "Revenu",
-        solidarity: "Crédit solidarité",
-        workPremium: "Prime travail",
-        bpaSavings: "Économies BPA",
-        cwb: "PTE",
-        qcTotal: "Total QC",
-        fedTotal: "Total fédéral",
-        totalBenefit: "Total",
-        cashBack: "Remboursement",
-        warnings: "⚠️ Avertissements:",
-        missingUnionDues: "Cotisations syndicales manquantes",
-        missingSIN: "NAS manquant",
-        invalidRL1: "❌ RL-1 invalide — vérifiez cas A"
+        title: "💰 TaxSyncQC",
+        subtitle: "Estimateur Québec + Fédéral 2025",
+        rl1A: "Revenu d'emploi",
+        rl1C: "Cotisations RRQ",
+        rl1D: "Cotisations RQAP",
+        rl1L: "Cotisations syndicales (optionnel)",
+        t414: "Revenu d'emploi",
+        t416: "Cotisations RPC",
+        t418: "Cotisations AE",
+        t444: "Cotisations syndicales (optionnel)",
+        calculate: "Calculer remboursement",
+        clear: "Effacer",
+        invalidIncome: "❌ Entrez revenu (Ligne A ou Case 14)"
       }
     };
 
     let lang = 'en';
+    let activeTab = 'rl1';
     const _ = (key) => translations[lang][key] || key;
 
     function setLang(newLang) {
@@ -99,51 +139,42 @@
       updateUI();
     }
 
+    function showTab(tab) {
+      activeTab = tab;
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById(tab + '-section').classList.add('active');
+    }
+
     function updateUI() {
       document.getElementById('title').textContent = _('title');
-      document.getElementById('subtitle').innerHTML = `<strong>${_('subtitle')}</strong>`;
-      document.getElementById('paste-label').textContent = _('pasteLabel');
+      document.getElementById('subtitle').textContent = _('subtitle');
+      document.getElementById('rl1-a-help').textContent = _('rl1A');
+      document.getElementById('rl1-c-help').textContent = _('rl1C');
+      document.getElementById('rl1-d-help').textContent = _('rl1D');
+      document.getElementById('rl1-l-help').textContent = _('rl1L');
+      document.getElementById('t4-14-help').textContent = _('t414');
+      document.getElementById('t4-16-help').textContent = _('t416');
+      document.getElementById('t4-18-help').textContent = _('t418');
+      document.getElementById('t4-44-help').textContent = _('t444');
     }
 
     function clearForm() {
-      document.getElementById('textInput').value = '';
+      document.querySelectorAll('input').forEach(i => i.value = '');
       document.getElementById('output').innerHTML = '';
-    }
-
-    function parseRL1(text) {
-      const clean = text.replace(/\s+/g, ' ').trim();
-      const extract = (regex) => {
-        const m = clean.match(regex);
-        return m ? parseFloat(m[1].replace(/,/g, '')) || 0 : null;
-      };
-      return {
-        income: extract(/Case\s+A[:\s]*([\d,]+\.?\d*)/i),
-        unionDues: extract(/Case\s+L[:\s]*([\d,]+\.?\d*)/i),
-        sin: clean.match(/S\.I\.N\.\s*[:\-]?\s*(\d{3}\s?\d{3}\s?\d{3})/i)?.[1] || null,
-        isValid: function() { return this.income > 0; },
-        warnings: function() {
-          const w = [];
-          if (this.unionDues === null) w.push(_('missingUnionDues'));
-          if (!this.sin) w.push(_('missingSIN'));
-          return w;
-        }
-      };
     }
 
     function calculateSolidarity(income) {
       const BASE = 531, START = 57965, END = 64125;
       let amt = BASE;
-      if (income > START) {
-        if (income >= END) amt = 0;
-        else amt *= (1 - (income - START) / (END - START));
-      }
+      if (income > START) amt = income >= END ? 0 : amt * (1 - (income - START) / (END - START));
       return Math.round(amt * 100) / 100;
     }
 
     function calculateWorkPremium(income) {
       if (income < 7200) return 0;
-      const base = Math.min(income - 7200, 33100);
-      return Math.min(Math.round(base * 0.26 * 100) / 100, 728);
+      return Math.min(Math.round(Math.min(income - 7200, 33100) * 0.26 * 100) / 100, 728);
     }
 
     function estimateFederal(income) {
@@ -155,57 +186,40 @@
     }
 
     function estimate() {
-      const text = document.getElementById('textInput').value;
-      if (!text.trim()) {
-        document.getElementById('output').innerHTML = `<p style="color:red">${_('invalidRL1')}</p>`;
+      let income = 0;
+      if (activeTab === 'rl1') {
+        income = parseFloat(document.getElementById('rl1-a').value) || 0;
+      } else {
+        income = parseFloat(document.getElementById('t4-14').value) || 0;
+      }
+
+      if (!income) {
+        document.getElementById('output').innerHTML = `<p style="color:red">${_('invalidIncome')}</p>`;
         return;
       }
 
-      const data = parseRL1(text);
-      if (!data.isValid()) {
-        document.getElementById('output').innerHTML = `<p style="color:red">${_('invalidRL1')}</p>`;
-        return;
-      }
-
-      const income = data.income;
       const qc = { solidarity: calculateSolidarity(income), workPremium: calculateWorkPremium(income) };
       const fed = estimateFederal(income);
       const qcTotal = qc.solidarity + qc.workPremium;
       const totalBenefit = qcTotal + fed.bpaSavings + fed.cwb;
       const cashBack = qc.workPremium + fed.cwb;
 
-      let html = `<div class="result" style="display:block;">
+      document.getElementById('output').innerHTML = `<div class="result" style="display:block;">
         <h3>🧾 ${lang === 'fr' ? 'Estimation 2025' : 'Estimate 2025'}</h3>
-        <p>💼 ${_('income')}: $${income.toLocaleString()}</p>
-        <h4>🇶🇨 ${lang === 'fr' ? 'Québec' : 'Quebec'}</h4>
-        <p>💰 ${_('solidarity')}: $${qc.solidarity}</p>
-        <p>👷 ${_('workPremium')}: $${qc.workPremium}</p>
-        <p><strong>✅ ${_('qcTotal')}: $${qcTotal.toFixed(2)}</strong></p>
+        <p><strong>💼 ${lang === 'fr' ? 'Revenu' : 'Income'}: $${income.toLocaleString()}</strong></p>
+        <h4>🇶🇨 Québec</h4>
+        <p>💰 ${lang === 'fr' ? 'Crédit solidarité' : 'Solidarity'}: $${qc.solidarity}</p>
+        <p>👷 ${lang === 'fr' ? 'Prime travail' : 'Work Premium'}: $${qc.workPremium}</p>
+        <p><strong>✅ Total QC: $${qcTotal.toFixed(2)}</strong></p>
         <h4>🇨🇦 ${lang === 'fr' ? 'Fédéral' : 'Federal'}</h4>
-        <p>🛡️ ${_('bpaSavings')}: $${fed.bpaSavings}</p>
-        <p>💵 ${_('cwb')}: $${fed.cwb}</p>
-        <p><strong>✅ ${_('fedTotal')}: $${(fed.bpaSavings + fed.cwb).toFixed(2)}</strong></p>
-        <p><strong>🎯 ${_('totalBenefit')}: $${totalBenefit.toFixed(2)}</strong></p>
-        <p><strong>💸 ${_('cashBack')}: $${cashBack.toFixed(2)}</strong></p>
+        <p>🛡️ BPA: $${fed.bpaSavings}</p>
+        <p>💵 ${lang === 'fr' ? 'PTE' : 'CWB'}: $${fed.cwb}</p>
+        <p><strong>✅ Total Fed: $${(fed.bpaSavings + fed.cwb).toFixed(2)}</strong></p>
+        <hr style="margin: 1rem 0; border: none; border-top: 2px solid #ddd;">
+        <p><strong>🎯 ${lang === 'fr' ? 'Avantage total' : 'Total Benefit'}: $${totalBenefit.toFixed(2)}</strong></p>
+        <p style="font-size: 1.25rem; color: #667eea;"><strong>💸 ${lang === 'fr' ? 'Remboursement' : 'Cash Back'}: $${cashBack.toFixed(2)}</strong></p>
       </div>`;
-
-      const warns = data.warnings();
-      if (warns.length > 0) {
-        html += `<div class="warning"><strong>${_('warnings')}</strong><ul>`;
-        warns.forEach(w => html += `<li>${w}</li>`);
-        html += '</ul></div>';
-      }
-
-      document.getElementById('output').innerHTML = html;
     }
-
-    document.getElementById('fileInput').addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (evt) => document.getElementById('textInput').value = evt.target.result;
-      reader.readAsText(file);
-    });
 
     updateUI();
   </script>
