@@ -1,207 +1,285 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>TaxSyncQC — Estimateur d'impôt Québec</title>
+  <title>TaxSyncQC — Estimation officielle Québec 2025</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 600px; margin: 1rem auto; padding: 0 1rem; line-height: 1.6; }
+    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 800px; margin: 1rem auto; padding: 0 1rem; line-height: 1.5; }
     .lang-toggle { text-align: right; margin-bottom: 1rem; }
-    .tab { display: flex; margin-bottom: 1rem; }
-    .tab button {
-      padding: 0.5rem 1rem; background: #eee; border: 1px solid #ccc; flex: 1;
-    }
-    .tab .active { background: #1890ff; color: white; }
+    .tabs { display: flex; margin-bottom: 1rem; border-bottom: 1px solid #ccc; }
+    .tab-btn { padding: 0.75rem 1.5rem; background: #f0f0f0; border: none; cursor: pointer; }
+    .tab-btn.active { background: #1890ff; color: white; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    fieldset { border: 1px solid #ddd; border-radius: 6px; padding: 1rem; margin-bottom: 1.5rem; }
+    legend { font-weight: bold; padding: 0 0.5rem; }
     .input-group { margin-bottom: 1rem; }
-    label { display: block; margin-bottom: 0.25rem; font-weight: bold; }
-    input { width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; }
+    label { display: block; font-weight: bold; margin-bottom: 0.25rem; }
+    .box-label { color: #1890ff; font-family: monospace; }
     .hint { font-size: 0.85rem; color: #666; margin-top: 0.25rem; }
-    .rrsp-slider { margin: 1.5rem 0; }
-    button.primary { background: #1890ff; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 4px; cursor: pointer; }
-    .result { background: #e6f7ff; border-left: 4px solid #1890ff; padding: 1rem; margin: 1rem 0; border-radius: 4px; }
+    input, select { width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; }
+    .toggle { margin: 1rem 0; }
+    button { background: #1890ff; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 4px; cursor: pointer; font-size: 1.1em; }
+    .result { background: #e6f7ff; border-left: 4px solid #1890ff; padding: 1rem; margin: 1.5rem 0; border-radius: 4px; }
     .warnings { color: #fa8c16; margin-top: 1rem; }
+    .json-output { background: #f5f5f5; padding: 1rem; border-radius: 4px; overflow-x: auto; font-family: monospace; font-size: 0.9em; }
   </style>
 </head>
 <body>
   <div class="lang-toggle">
     <button onclick="setLang('en')" id="btn-en">EN</button>
-    <button onclick="setLang('fr')" id="btn-fr">FR</button>
+    <button onclick="setLang('fr')" id="btn-fr" style="font-weight:bold">FR</button>
   </div>
 
-  <h1 id="title">💰 TaxSyncQC</h1>
-  <p id="subtitle"><strong>Estimateur officiel Québec 2025</strong></p>
+  <h1>💰 TaxSyncQC — Estimation officielle Québec 2025</h1>
+  <p>Basé sur les documents <strong>RL-1-T(2025-10)</strong> et <strong>T4 (2025)</strong> de Revenu Québec et l’ARC.</p>
 
-  <div class="tab">
-    <button class="active" onclick="showTab('rl1')">RL-1 (Revenu Québec)</button>
-    <button onclick="showTab('t4')">T4 (CRA)</button>
+  <div class="toggle">
+    <label>
+      <input type="checkbox" id="modeToggle" onchange="toggleMode()">
+      Mode avancé (tous les champs)
+    </label>
   </div>
 
-  <form id="rl1-form" style="display:block;">
-    <div class="input-group">
-      <label id="l-boxA">RL-1 Box A (Line 101)</label>
-      <input type="number" id="boxA" placeholder="Ex: 60000" step="100">
-      <div class="hint" id="h-boxA">Revenu d'emploi avant retenues — top left on RL-1</div>
-    </div>
-    <div class="input-group">
-      <label id="l-boxF">RL-1 Box F (Line 397.1)</label>
-      <input type="number" id="boxF" placeholder="Ex: 400" step="1">
-      <div class="hint" id="h-boxF">Cotisations syndicales</div>
-    </div>
-    <div class="input-group">
-      <label id="l-sin">SIN / NAS</label>
-      <input type="text" id="sin" placeholder="Ex: 123 456 789" maxlength="11">
-      <div class="hint" id="h-sin">9 chiffres, souvent près du nom de l'employeur</div>
-    </div>
-  </form>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showTab('rl1')">RL-1 (Revenu Québec)</button>
+    <button class="tab-btn" onclick="showTab('t4')">T4 (ARC)</button>
+    <button class="tab-btn" onclick="showTab('both')">Les deux</button>
+  </div>
 
-  <form id="t4-form" style="display:none;">
-    <div class="input-group">
-      <label id="l-box14">T4 Box 14 (Line 10100)</label>
-      <input type="number" id="box14" placeholder="Ex: 60000" step="100">
-      <div class="hint" id="h-box14">Revenus d'emploi — center-left on T4</div>
-    </div>
-    <div class="input-group">
-      <label id="l-box44">T4 Box 44 (Line 21200)</label>
-      <input type="number" id="box44" placeholder="Ex: 400" step="1">
-      <div class="hint" id="h-box44">Cotisations syndicales</div>
-    </div>
-    <div class="input-group">
-      <label id="l-sin2">SIN / NAS</label>
-      <input type="text" id="sin2" placeholder="Ex: 123-456-789" maxlength="11">
-      <div class="hint" id="h-sin2">Top-left corner</div>
-    </div>
-  </form>
+  <!-- RL-1 Tab -->
+  <div id="rl1Tab" class="tab-content active">
+    <form id="rl1Form">
+      <fieldset>
+        <legend>✅ Essentiel (requis)</legend>
+        <div class="input-group">
+          <label><span class="box-label">Case A</span> — Revenu d’emploi (Ligne <strong>101</strong>)</label>
+          <input type="number" id="rl1_A" step="100" placeholder="Ex: 60000">
+          <div class="hint">Box A — top left on RL-1</div>
+        </div>
+        <div class="input-group">
+          <label><span class="box-label">Case F</span> — Cotisations syndicales (Ligne <strong>397.1</strong>)</label>
+          <input type="number" id="rl1_F" step="1" placeholder="Ex: 400">
+        </div>
+        <div class="input-group">
+          <label>NAS</label>
+          <input type="text" id="rl1_sin" maxlength="11" placeholder="Ex: 123 456 789">
+        </div>
+      </fieldset>
 
-  <div class="rrsp-slider">
-    <label id="l-rrsp">Contribution RRSP / RRSP Contribution ($)</label>
-    <input type="range" id="rrspSlider" min="0" max="31560" value="0" step="100">
+      <fieldset id="rl1Deductions" style="display:none;">
+        <legend>⚠️ Déductions</legend>
+        <div class="input-group">
+          <label><span class="box-label">Case B.A</span> — Cotisations RRQ (Ligne <strong>98</strong>)</label>
+          <input type="number" id="rl1_BA" step="1">
+        </div>
+        <div class="input-group">
+          <label><span class="box-label">Case H</span> — Prime d’assurance parentale (Ligne <strong>97</strong>)</label>
+          <input type="number" id="rl1_H" step="1">
+        </div>
+        <div class="input-group">
+          <label><span class="box-label">Case D</span> — Cotisations RPA (Ligne <strong>205</strong>)</label>
+          <input type="number" id="rl1_D" step="1">
+        </div>
+        <div class="input-group">
+          <label><span class="box-label">Case D-1</span> — Arrangement de retraite (Ligne <strong>207</strong>)</label>
+          <input type="number" id="rl1_D1" step="1">
+        </div>
+        <div class="input-group">
+          <label><span class="box-label">Case N</span> — Dons de bienfaisance (Ligne <strong>395</strong>)</label>
+          <input type="number" id="rl1_N" step="1">
+        </div>
+      </fieldset>
+
+      <fieldset id="rl1Benefits" style="display:none;">
+        <legend>🔹 Avantages imposables (inclus dans la Case A)</legend>
+        <div class="input-group">
+          <label><span class="box-label">Case J</span> — Régime privé de soins de santé (Ligne <strong>381</strong>)</label>
+          <input type="number" id="rl1_J" step="1">
+        </div>
+        <div class="input-group">
+          <label><span class="box-label">Case K</span> — Déplacements (région éloignée) (Ligne <strong>236</strong>)</label>
+          <input type="number" id="rl1_K" step="1">
+        </div>
+        <div class="input-group">
+          <label><span class="box-label">Case L</span> — Autres avantages</label>
+          <input type="number" id="rl1_L" step="1">
+        </div>
+        <div class="input-group">
+          <label><span class="box-label">Case M</span> — Commissions (Ligne <strong>100</strong>)</label>
+          <input type="number" id="rl1_M" step="1">
+        </div>
+      </fieldset>
+    </form>
+  </div>
+
+  <!-- T4 Tab -->
+  <div id="t4Tab" class="tab-content">
+    <form id="t4Form">
+      <fieldset>
+        <legend>✅ Essentiel (requis)</legend>
+        <div class="input-group">
+          <label><span class="box-label">Box 14</span> — Revenus d’emploi (Ligne <strong>10100</strong>)</label>
+          <input type="number" id="t4_14" step="100" placeholder="Ex: 60000">
+          <div class="hint">Box 14 — center-left on T4</div>
+        </div>
+        <div class="input-group">
+          <label><span class="box-label">Box 44</span> — Cotisations syndicales (Ligne <strong>21200</strong>)</label>
+          <input type="number" id="t4_44" step="1" placeholder="Ex: 400">
+        </div>
+        <div class="input-group">
+          <label>SIN</label>
+          <input type="text" id="t4_sin" maxlength="11" placeholder="Ex: 123-456-789">
+        </div>
+      </fieldset>
+
+      <fieldset id="t4Deductions" style="display:none;">
+        <legend>⚠️ Déductions</legend>
+        <div class="input-group">
+          <label><span class="box-label">Box 17</span> — Cotisations RRQ (QC) / <span class="box-label">Box 16</span> — RPC (autres)</label>
+          <input type="number" id="t4_17" step="1" placeholder="QC: Box 17">
+          <input type="number" id="t4_16" step="1" placeholder="Elsewhere: Box 16">
+        </div>
+        <div class="input-group">
+          <label><span class="box-label">Box 55</span> — RPAP (QC) / <span class="box-label">Box 18</span> — AE</label>
+          <input type="number" id="t4_55" step="1" placeholder="QC: Box 55">
+          <input type="number" id="t4_18" step="1" placeholder="Elsewhere: Box 18">
+        </div>
+        <div class="input-group">
+          <label><span class="box-label">Box 20</span> — Cotisations RPA (Ligne <strong>20700</strong>)</label>
+          <input type="number" id="t4_20" step="1">
+        </div>
+        <div class="input-group">
+          <label><span class="box-label">Box 52</span> — Facteur d’équivalence (Ligne <strong>20600</strong>)</label>
+          <input type="number" id="t4_52" step="1">
+        </div>
+        <div class="input-group">
+          <label><span class="box-label">Box 46</span> — Dons de bienfaisance</label>
+          <input type="number" id="t4_46" step="1">
+        </div>
+      </fieldset>
+
+      <fieldset id="t4Benefits" style="display:none;">
+        <legend>🔹 Avantages imposables (déjà inclus dans Box 14)</legend>
+        <div class="input-group">
+          <label><span class="box-label">Boxes 30, 32, 34, 36, 38, 40</span> — Avantages divers (logement, auto, prêts, etc.)</label>
+          <input type="number" id="t4_benefits" step="1" placeholder="Total si connu">
+        </div>
+      </fieldset>
+    </form>
+  </div>
+
+  <!-- Both Tab -->
+  <div id="bothTab" class="tab-content">
+    <p>Entrez les données des deux formulaires ci-dessus — utile pour les travailleurs en double statut (ex: autochtone, réserviste).</p>
+  </div>
+
+  <div class="input-group">
+    <label>Contribution RRSP ($)</label>
+    <input type="range" id="rrspSlider" min="0" max="31560" value="0" step="100" oninput="updateRrsp(this.value)">
     <div id="rrspValue">$0</div>
   </div>
 
-  <button type="button" class="primary" onclick="calculate()">Estimer / Estimate</button>
+  <button type="button" onclick="calculate()">Estimer les crédits</button>
 
   <div id="output"></div>
+  <div id="jsonOutput" class="json-output" style="display:none;"></div>
 
   <script>
     let lang = 'fr';
     const translations = {
-      en: {
-        title: "💰 TaxSyncQC — Quebec Tax Estimator",
-        subtitle: "Official 2025 estimator (RL-1 & T4)",
-        l_boxA: "RL-1 Box A (Line 101)",
-        h_boxA: "Employment income — top left on RL-1",
-        l_boxF: "RL-1 Box F (Line 397.1)",
-        h_boxF: "Union dues",
-        l_box14: "T4 Box 14 (Line 10100)",
-        h_box14: "Employment income — center-left on T4",
-        l_box44: "T4 Box 44 (Line 21200)",
-        h_box44: "Union dues",
-        l_sin: "SIN / SIN",
-        h_sin: "9 digits, near employer name",
-        l_rrsp: "RRSP Contribution ($)",
-        estimateBtn: "Estimate",
-        resultTitle: "🧾 Quebec + Federal Estimate (2025)",
-        income: "Income",
-        solidarity: "Solidarity Credit",
-        workPremium: "Work Premium",
-        bpaSavings: "BPA Savings",
-        cwb: "CWB (cash)",
-        totalBenefit: "Total Benefit",
-        cashBack: "Cash Back",
-        warnings: "⚠️ Warnings:",
-        missingUnionDues: "Union dues missing — may be deductible",
-        missingSIN: "SIN missing — required for filing"
-      },
-      fr: {
-        title: "💰 TaxSyncQC — Estimateur d'impôt Québec",
-        subtitle: "Estimateur officiel 2025 (RL-1 et T4)",
-        l_boxA: "RL-1 Case A (Ligne 101)",
-        h_boxA: "Revenu d'emploi avant retenues — en haut à gauche",
-        l_boxF: "RL-1 Case F (Ligne 397.1)",
-        h_boxF: "Cotisations syndicales",
-        l_box14: "T4 Case 14 (Ligne 10100)",
-        h_box14: "Revenus d'emploi — centre-gauche sur T4",
-        l_box44: "T4 Case 44 (Ligne 21200)",
-        h_box44: "Cotisations syndicales",
-        l_sin: "SIN / NAS",
-        h_sin: "9 chiffres, souvent près du nom de l'employeur",
-        l_rrsp: "Contribution RRSP ($)",
-        estimateBtn: "Estimer",
-        resultTitle: "🧾 Estimation Québec + Fédéral (2025)",
-        income: "Revenu",
-        solidarity: "Crédit solidarité",
-        workPremium: "Prime au travail",
-        bpaSavings: "Économies BPA",
-        cwb: "PTE (argent)",
-        totalBenefit: "Avantage total",
-        cashBack: "Remboursement",
-        warnings: "⚠️ Avertissements :",
-        missingUnionDues: "Cotisations syndicales manquantes — peuvent être déductibles",
-        missingSIN: "NAS manquant — obligatoire pour la déclaration"
-      }
+      en: { title: "TaxSyncQC — Official Quebec 2025 Estimator", subtitle: "Based on RL-1 & T4 slips", estimate: "Estimate Credits", result: "🧾 Quebec + Federal Estimate (2025)" },
+      fr: { title: "TaxSyncQC — Estimation officielle Québec 2025", subtitle: "Basé sur les formulaires RL-1 et T4", estimate: "Estimer les crédits", result: "🧾 Estimation Québec + Fédéral (2025)" }
     };
-
     const _ = (key) => translations[lang][key] || key;
 
-    function setLang(newLang) {
-      lang = newLang;
-      document.getElementById('btn-en').style.fontWeight = lang === 'en' ? 'bold' : 'normal';
-      document.getElementById('btn-fr').style.fontWeight = lang === 'fr' ? 'bold' : 'normal';
-      updateUI();
+    function setLang(l) {
+      lang = l;
+      document.getElementById('btn-en').style.fontWeight = l === 'en' ? 'bold' : 'normal';
+      document.getElementById('btn-fr').style.fontWeight = l === 'fr' ? 'bold' : 'normal';
+      document.title = _( 'title' );
+      document.querySelector('h1').textContent = _( 'title' );
+      document.querySelector('button').textContent = _( 'estimate' );
     }
 
-    function updateUI() {
-      document.getElementById('title').textContent = _( 'title' );
-      document.getElementById('subtitle').textContent = _( 'subtitle' );
-      document.getElementById('l-boxA').textContent = _( 'l_boxA' );
-      document.getElementById('h-boxA').textContent = _( 'h_boxA' );
-      document.getElementById('l-boxF').textContent = _( 'l_boxF' );
-      document.getElementById('h-boxF').textContent = _( 'h_boxF' );
-      document.getElementById('l-box14').textContent = _( 'l_box14' );
-      document.getElementById('h-box14').textContent = _( 'h_box14' );
-      document.getElementById('l-box44').textContent = _( 'l_box44' );
-      document.getElementById('h-box44').textContent = _( 'h_box44' );
-      document.getElementById('l-sin').textContent = _( 'l_sin' );
-      document.getElementById('h-sin').textContent = _( 'h_sin' );
-      document.getElementById('l-sin2').textContent = _( 'l_sin' );
-      document.getElementById('h-sin2').textContent = _( 'h_sin' );
-      document.getElementById('l-rrsp').textContent = _( 'l_rrsp' );
-      document.querySelector('.primary').textContent = _( 'estimateBtn' );
+    function toggleMode() {
+      const advanced = document.getElementById('modeToggle').checked;
+      ['rl1Deductions', 'rl1Benefits', 't4Deductions', 't4Benefits'].forEach(id => {
+        document.getElementById(id).style.display = advanced ? 'block' : 'none';
+      });
+      document.getElementById('jsonOutput').style.display = advanced ? 'block' : 'none';
     }
 
     function showTab(tabId) {
-      document.getElementById('rl1-form').style.display = tabId === 'rl1' ? 'block' : 'none';
-      document.getElementById('t4-form').style.display = tabId === 't4' ? 'block' : 'none';
-      document.querySelectorAll('.tab button').forEach(btn => btn.classList.remove('active'));
+      ['rl1Tab', 't4Tab', 'bothTab'].forEach(id => {
+        document.getElementById(id).classList.toggle('active', id === tabId + 'Tab');
+      });
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
       event.target.classList.add('active');
     }
 
-    document.getElementById('rrspSlider').addEventListener('input', function() {
-      document.getElementById('rrspValue').textContent = `$${this.value}`;
-    });
+    function updateRrsp(val) {
+      document.getElementById('rrspValue').textContent = `$${parseInt(val).toLocaleString()}`;
+    }
 
-    function calculate() {
-      let income, unionDues, sin;
-      const isRL1 = document.getElementById('rl1-form').style.display === 'block';
+    function getFormData() {
+      const isRL1 = document.getElementById('rl1Tab').classList.contains('active');
+      const form = isRL1 ? 'rl1' : 't4';
+      
+      const data = {
+        source: isRL1 ? 'RL-1' : 'T4',
+        rl1: { A: null, F: null, sin: null },
+        t4: { '14': null, '44': null, sin: null }
+      };
 
       if (isRL1) {
-        income = parseFloat(document.getElementById('boxA').value) || 0;
-        unionDues = parseFloat(document.getElementById('boxF').value) || null;
-        sin = document.getElementById('sin').value;
+        data.rl1.A = parseFloat(document.getElementById('rl1_A').value) || 0;
+        data.rl1.F = parseFloat(document.getElementById('rl1_F').value) || null;
+        data.rl1.sin = document.getElementById('rl1_sin').value;
+        if (document.getElementById('modeToggle').checked) {
+          data.rl1['B.A'] = parseFloat(document.getElementById('rl1_BA').value) || null;
+          data.rl1.H = parseFloat(document.getElementById('rl1_H').value) || null;
+          data.rl1.D = parseFloat(document.getElementById('rl1_D').value) || null;
+          data.rl1['D-1'] = parseFloat(document.getElementById('rl1_D1').value) || null;
+          data.rl1.N = parseFloat(document.getElementById('rl1_N').value) || null;
+          data.rl1.J = parseFloat(document.getElementById('rl1_J').value) || null;
+          data.rl1.K = parseFloat(document.getElementById('rl1_K').value) || null;
+          data.rl1.L = parseFloat(document.getElementById('rl1_L').value) || null;
+          data.rl1.M = parseFloat(document.getElementById('rl1_M').value) || null;
+        }
       } else {
-        income = parseFloat(document.getElementById('box14').value) || 0;
-        unionDues = parseFloat(document.getElementById('box44').value) || null;
-        sin = document.getElementById('sin2').value;
+        data.t4['14'] = parseFloat(document.getElementById('t4_14').value) || 0;
+        data.t4['44'] = parseFloat(document.getElementById('t4_44').value) || null;
+        data.t4.sin = document.getElementById('t4_sin').value;
+        if (document.getElementById('modeToggle').checked) {
+          data.t4['17'] = parseFloat(document.getElementById('t4_17').value) || null;
+          data.t4['16'] = parseFloat(document.getElementById('t4_16').value) || null;
+          data.t4['55'] = parseFloat(document.getElementById('t4_55').value) || null;
+          data.t4['18'] = parseFloat(document.getElementById('t4_18').value) || null;
+          data.t4['20'] = parseFloat(document.getElementById('t4_20').value) || null;
+          data.t4['52'] = parseFloat(document.getElementById('t4_52').value) || null;
+          data.t4['46'] = parseFloat(document.getElementById('t4_46').value) || null;
+          data.t4.benefits = parseFloat(document.getElementById('t4_benefits').value) || null;
+        }
       }
 
+      return data;
+    }
+
+    function calculate() {
+      const data = getFormData();
+      const income = data.source === 'RL-1' ? data.rl1.A : data.t4['14'];
+      const unionDues = data.source === 'RL-1' ? data.rl1.F : data.t4['44'];
+      const sin = data.source === 'RL-1' ? data.rl1.sin : data.t4.sin;
       const rrsp = parseFloat(document.getElementById('rrspSlider').value) || 0;
       const effectiveIncome = Math.max(0, income - rrsp);
 
-      // QC credits
+      // Québec credits
       const solidarity = effectiveIncome <= 57965 ? 531 : Math.max(0, 531 * (1 - (effectiveIncome - 57965) / 6160));
       const workPremium = effectiveIncome < 7200 ? 0 : Math.min(728, Math.min(effectiveIncome - 7200, 33100) * 0.26);
 
-      // Fed credits
+      // Federal credits
       const cwb = effectiveIncome <= 25539 ? Math.min(effectiveIncome * 0.27, 1519) : 
                  effectiveIncome <= 35539 ? Math.max(0, 1519 - (effectiveIncome - 25539) * 0.15) : 0;
       const bpa = Math.max(0, 15705 - Math.max(0, effectiveIncome - 165430) * 15705 / 70000);
@@ -217,31 +295,45 @@
       const cashBack = workPremium + cwb;
 
       let html = `<div class="result">
-        <h3>${_( 'resultTitle' )}</h3>
-        <p><strong>💼 ${_( 'income' )}: $${income.toLocaleString()}</strong></p>
-        ${rrsp > 0 ? `<p>📉 Après RRSP ($${rrsp}): $${effectiveIncome.toLocaleString()}</p>` : ''}
+        <h3>${_( 'result' )}</h3>
+        <p><strong>💼 Revenu brut: $${income.toLocaleString()}</strong></p>
+        ${rrsp > 0 ? `<p>📉 Après RRSP ($${rrsp.toLocaleString()}): $${effectiveIncome.toLocaleString()}</p>` : ''}
         ${rrsp > 0 ? `<p>💰 Économie d'impôt: $${taxSaved.toFixed(2)}</p>` : ''}
         <h4>🇶🇨 Québec</h4>
-        <p>💰 ${_( 'solidarity' )}: $${solidarity.toFixed(2)}</p>
-        <p>👷 ${_( 'workPremium' )}: $${workPremium.toFixed(2)}</p>
+        <p>💰 Crédit solidarité: $${solidarity.toFixed(2)}</p>
+        <p>👷 Prime au travail: $${workPremium.toFixed(2)}</p>
         <h4>🇨🇦 Fédéral</h4>
-        <p>🛡️ ${_( 'bpaSavings' )}: $${bpaSavings.toFixed(2)}</p>
-        <p>💵 ${_( 'cwb' )}: $${cwb.toFixed(2)}</p>
-        <hr style="margin: 1rem 0; border: none; border-top: 1px solid #ddd;">
-        <p><strong>🎯 ${_( 'totalBenefit' )}: $${totalBenefit.toFixed(2)}</strong></p>
-        <p style="font-size: 1.2em; color: #1890ff;"><strong>💸 ${_( 'cashBack' )}: $${cashBack.toFixed(2)}</strong></p>
+        <p>🛡️ Économies BPA: $${bpaSavings.toFixed(2)}</p>
+        <p>💵 PTE: $${cwb.toFixed(2)}</p>
+        <hr>
+        <p><strong>🎯 Avantage total: $${totalBenefit.toFixed(2)}</strong></p>
+        <p style="font-size: 1.2em; color: #1890ff;"><strong>💸 Remboursement: $${cashBack.toFixed(2)}</strong></p>
       </div>`;
 
       const warnings = [];
-      if (unionDues === null || isNaN(unionDues)) warnings.push(_( 'missingUnionDues' ));
-      if (!sin || !/\d{9}/.test(sin.replace(/\D/g, ''))) warnings.push(_( 'missingSIN' ));
+      if (unionDues === null) warnings.push("Cotisations syndicales manquantes — peuvent être déductibles");
+      if (!sin || !/\d{9}/.test(sin.replace(/\D/g, ''))) warnings.push("NAS manquant — obligatoire");
       if (warnings.length > 0) {
-        html += `<div class="warnings"><strong>${_( 'warnings' )}</strong><ul>`;
+        html += `<div class="warnings"><strong>⚠️ Avertissements :</strong><ul>`;
         warnings.forEach(w => html += `<li>${w}</li>`);
         html += '</ul></div>';
       }
 
       document.getElementById('output').innerHTML = html;
+
+      // Show structured JSON for automation
+      if (document.getElementById('modeToggle').checked) {
+        const exportData = {
+          ...data,
+          analysis: {
+            effectiveIncome,
+            qcCredits: { solidarity, workPremium },
+            fedCredits: { bpaSavings, cwb },
+            rrspImpact: { contribution: rrsp, taxSaved }
+          }
+        };
+        document.getElementById('jsonOutput').textContent = JSON.stringify(exportData, null, 2);
+      }
     }
 
     // Init
