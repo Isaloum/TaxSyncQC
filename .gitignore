@@ -1,26 +1,30 @@
+```
 # Dependencies
 node_modules/
-package-lock.json
 
-# Test coverage
-coverage/
-*.lcov
+# Logs and temp files
+*.log
+*.tmp
 
-# Environment variables
+# Environment
 .env
 .env.local
+*.env.*
 
-# IDE
+# Editors
 .vscode/
 .idea/
-*.swp
-*.swo
-*~
 
-# OS
-.DS_Store
-Thumbs.db
+# Build artifacts
+build/
+dist/
 
-# Logs
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Original rules preserved
 *.log
-npm-debug.log*
+```

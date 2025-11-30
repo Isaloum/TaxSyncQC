@@ -1,5 +1,5 @@
 // i18n.js — Quebec-compliant bilingual strings (fr/en)
-export function t(lang = 'en') {
+export function t(key, lang = 'en') {
   const strings = {
     en: {
       income: "Income",
@@ -24,5 +24,5 @@ export function t(lang = 'en') {
       cashBack: "Remboursement"
     }
   };
-  return (key) => strings[lang]?.[key] || strings.en[key] || key;
+  return strings[lang]?.[key] || strings.en[key] || key;
 }
