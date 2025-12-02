@@ -36,7 +36,7 @@ jobs:
             ${{ runner.os }}-node-${{ matrix.node-version }}-
 
       - name: Install dependencies
-        run: npm ci
+        run: bash -lc '([ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]) && npm ci || npm install'
 
       - name: Run lint (if present)
         run: npm run lint --if-present
