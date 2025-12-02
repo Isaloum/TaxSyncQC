@@ -12,6 +12,9 @@ jobs:
   build-test-audit:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+
     strategy:
       matrix:
         node-version: [18, 20]
