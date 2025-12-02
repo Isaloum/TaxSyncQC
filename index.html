@@ -18,13 +18,15 @@
     label { display: block; font-weight: bold; margin-bottom: 0.25rem; }
     .box-label { color: #1890ff; font-family: monospace; }
     .hint { font-size: 0.85rem; color: #666; margin-top: 0.25rem; }
-    input, select { width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; }
+    input, select, textarea { width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; }
     .toggle { margin: 1rem 0; }
     button { background: #1890ff; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 4px; cursor: pointer; font-size: 1.1em; }
     button.secondary { background: #52c41a; margin-left: 0.5rem; }
     .result { background: #e6f7ff; border-left: 4px solid #1890ff; padding: 1rem; margin: 1.5rem 0; border-radius: 4px; }
     .warnings { color: #fa8c16; margin-top: 1rem; }
     .json-output { background: #f5f5f5; padding: 1rem; border-radius: 4px; overflow-x: auto; font-family: monospace; font-size: 0.9em; margin-top: 1rem; }
+    .integration { border: 1px dashed #ccc; padding: 1rem; border-radius: 6px; margin: 1.5rem 0; background: #fafafa; }
+    .integration h2 { margin-top: 0; }
   </style>
 </head>
 <body>
@@ -182,15 +184,35 @@
     <div class="hint" data-i18n="hintRRSP">Maximum: $31,560 (2025 limit)</div>
   </div>
 
+  <div class="integration">
+    <h2 data-i18n="n8nTitle">🔗 Connect to n8n</h2>
+    <p class="hint" data-i18n="n8nDesc">Send pasted email/text to an n8n webhook that extracts RL-1/T4 fields and optional RRSP suggestion.</p>
+    <div class="input-group">
+      <label data-i18n="n8nUrlLabel">n8n webhook URL</label>
+      <input type="url" id="n8nUrl" placeholder="https://your-n8n.example/webhook/parse-slip">
+    </div>
+    <div class="input-group">
+      <label data-i18n="n8nTextLabel">Paste email/text to parse</label>
+      <textarea id="n8nText" rows="4" placeholder="Paste a payroll email or PDF text here"></textarea>
+    </div>
+    <div class="input-group" style="display:flex; gap:0.5rem; align-items:center;">
+      <button type="button" class="secondary" onclick="sendToN8n()" data-i18n="n8nSend">🚀 Send to n8n</button>
+      <button type="button" class="secondary" id="applyN8nBtn" onclick="applyN8nData()" disabled data-i18n="n8nApply">⬇️ Apply parsed fields</button>
+    </div>
+    <div id="n8nStatus" class="hint"></div>
+  </div>
+
   <button type="button" onclick="calculate()" data-i18n="estimateButton">Estimer les crédits</button>
   <button type="button" class="secondary" id="exportBtn" onclick="toggleJSON()" style="display:none;" data-i18n="exportButton">📋 Export JSON</button>
 
   <div id="output"></div>
   <div id="jsonOutput" class="json-output" style="display:none;"></div>
 
+  <script src="tax-calculator-bundle.js"></script>
   <script>
     let lang = 'fr';
     let lastCalculationData = null;
+    let lastN8nResult = null;
 
     const translations = {
       en: {
@@ -234,6 +256,16 @@
         hintRRSP: "Maximum: $31,560 (2025 limit)",
         estimateButton: "Estimate Credits",
         exportButton: "📋 Export JSON",
+        n8nTitle: "🔗 Connect to n8n",
+        n8nDesc: "Send pasted email/text to an n8n webhook that extracts RL-1/T4 fields and optional RRSP suggestion.",
+        n8nUrlLabel: "n8n webhook URL",
+        n8nTextLabel: "Paste email/text to parse",
+        n8nSend: "🚀 Send to n8n",
+        n8nApply: "⬇️ Apply parsed fields",
+        n8nNoResult: "No parsed fields yet — send text to your webhook first.",
+        n8nApplied: "Applied parsed values to the form.",
+        n8nErrorMissing: "Please paste some text and set your n8n webhook URL.",
+        n8nErrorCall: "Could not reach the n8n webhook. Double-check the URL and response format.",
         resultTitle: "🧾 Quebec + Federal Estimate (2025)",
         grossIncome: "💼 Gross income",
         afterRRSP: "📉 After RRSP",
@@ -290,6 +322,16 @@
         hintRRSP: "Maximum : 31 560 $ (limite 2025)",
         estimateButton: "Estimer les crédits",
         exportButton: "📋 Exporter JSON",
+        n8nTitle: "🔗 Se connecter à n8n",
+        n8nDesc: "Envoyez un courriel/texte collé vers un webhook n8n qui extrait les cases RL-1/T4 et une suggestion RRSP optionnelle.",
+        n8nUrlLabel: "URL du webhook n8n",
+        n8nTextLabel: "Collez le courriel/texte à analyser",
+        n8nSend: "🚀 Envoyer à n8n",
+        n8nApply: "⬇️ Appliquer les champs extraits",
+        n8nNoResult: "Aucun champ extrait pour le moment — envoyez d'abord le texte à votre webhook.",
+        n8nApplied: "Valeurs extraites appliquées au formulaire.",
+        n8nErrorMissing: "Collez un texte et ajoutez l'URL du webhook n8n.",
+        n8nErrorCall: "Impossible de joindre le webhook n8n. Vérifiez l'URL et le format de réponse.",
         resultTitle: "🧾 Estimation Québec + Fédéral (2025)",
         grossIncome: "💼 Revenu brut",
         afterRRSP: "📉 Après RRSP",
@@ -320,6 +362,11 @@
         const key = el.getAttribute('data-i18n');
         el.innerHTML = _(key);
       });
+
+      const n8nStatus = document.getElementById('n8nStatus');
+      if (n8nStatus && n8nStatus.dataset.i18nKey) {
+        n8nStatus.textContent = _(n8nStatus.dataset.i18nKey);
+      }
     }
 
     function toggleMode() {
@@ -392,23 +439,136 @@
       return data;
     }
 
+    function setN8nStatus(key, fallbackText = '') {
+      const statusEl = document.getElementById('n8nStatus');
+      if (!statusEl) return;
+      if (key) {
+        statusEl.dataset.i18nKey = key;
+        statusEl.textContent = _(key);
+      } else {
+        statusEl.dataset.i18nKey = '';
+        statusEl.textContent = fallbackText;
+      }
+    }
+
+    function loadSavedN8nUrl() {
+      try {
+        const saved = localStorage.getItem('n8nWebhookUrl');
+        if (saved) {
+          document.getElementById('n8nUrl').value = saved;
+        }
+      } catch (e) {
+        // localStorage not available (unlikely in browser), ignore
+      }
+    }
+
+    async function sendToN8n() {
+      const url = document.getElementById('n8nUrl').value.trim();
+      const text = document.getElementById('n8nText').value.trim();
+      const applyBtn = document.getElementById('applyN8nBtn');
+      applyBtn.disabled = true;
+      lastN8nResult = null;
+
+      if (!url || !text) {
+        setN8nStatus('n8nErrorMissing');
+        return;
+      }
+
+      setN8nStatus(null, lang === 'fr' ? 'Envoi au webhook n8n…' : 'Sending to n8n webhook…');
+
+      try {
+        try {
+          localStorage.setItem('n8nWebhookUrl', url);
+        } catch (e) {
+          // ignore storage errors
+        }
+
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text, lang, source: 'taxsyncqc-web' })
+        });
+
+        if (!response.ok) {
+          throw new Error('Bad status');
+        }
+
+        const payload = await response.json();
+        lastN8nResult = payload;
+        applyBtn.disabled = false;
+
+        const summary = [];
+        if (payload?.rl1 && Object.keys(payload.rl1).length > 0) {
+          summary.push(`RL-1: ${Object.keys(payload.rl1).join(', ')}`);
+        }
+        if (payload?.t4 && Object.keys(payload.t4).length > 0) {
+          summary.push(`T4: ${Object.keys(payload.t4).join(', ')}`);
+        }
+        if (payload?.rrsp !== undefined && payload.rrsp !== null) {
+          summary.push(`RRSP: ${payload.rrsp}`);
+        }
+
+        const statusText = (lang === 'fr' ? 'Champs reçus: ' : 'Fields received: ') + (summary.join(' | ') || 'OK');
+        setN8nStatus(null, statusText);
+      } catch (err) {
+        setN8nStatus('n8nErrorCall');
+      }
+    }
+
+    function applyN8nData() {
+      const applyBtn = document.getElementById('applyN8nBtn');
+      if (!lastN8nResult) {
+        setN8nStatus('n8nNoResult');
+        applyBtn.disabled = true;
+        return;
+      }
+
+      const applied = [];
+      const applyFields = (prefix, data) => {
+        if (!data) return;
+        Object.entries(data).forEach(([key, value]) => {
+          const normalizedKey = key.toString().replace(/[^a-zA-Z0-9]/g, '');
+          const el = document.getElementById(`${prefix}_${normalizedKey}`);
+          if (el && value !== undefined && value !== null && value !== '') {
+            el.value = value;
+            applied.push(`${prefix.toUpperCase()} ${key}`);
+          }
+        });
+      };
+
+      applyFields('rl1', lastN8nResult.rl1);
+      applyFields('t4', lastN8nResult.t4);
+
+      if (lastN8nResult.rrsp !== undefined && lastN8nResult.rrsp !== null) {
+        document.getElementById('rrspInput').value = lastN8nResult.rrsp;
+        applied.push('RRSP');
+      }
+
+      if (applied.length === 0) {
+        setN8nStatus('n8nNoResult');
+        applyBtn.disabled = true;
+        return;
+      }
+
+      const statusText = `${_('n8nApplied')} (${applied.join(', ')})`;
+      setN8nStatus(null, statusText);
+    }
+
     function calculate() {
       const data = getFormData();
       const income = data.source === 'RL-1' ? data.rl1.A : data.t4['14'];
       const unionDues = data.source === 'RL-1' ? data.rl1.F : data.t4['44'];
-      const rrsp = parseFloat(document.getElementById('rrspInput').value) || 0;
-      const effectiveIncome = Math.max(0, income - rrsp);
+      const rrspContribution = parseFloat(document.getElementById('rrspInput').value) || 0;
+      const rrsp = TaxCalculator.calculateRrspImpact(income, rrspContribution);
+      const effectiveIncome = rrsp.newIncome;
 
-      const solidarity = effectiveIncome <= 57965 ? 531 : Math.max(0, 531 * (1 - (effectiveIncome - 57965) / 6160));
-      const workPremium = effectiveIncome < 7200 ? 0 : Math.min(728, Math.min(effectiveIncome - 7200, 33100) * 0.26);
+      const solidarity = TaxCalculator.calculateSolidarityCredit(effectiveIncome);
+      const workPremium = TaxCalculator.calculateWorkPremium(effectiveIncome);
+      const cwb = TaxCalculator.calculateCWB(effectiveIncome);
+      const bpaSavings = TaxCalculator.calculateBPA(effectiveIncome);
 
-      const cwb = effectiveIncome <= 25539 ? Math.min(effectiveIncome * 0.27, 1519) :
-                 effectiveIncome <= 35539 ? Math.max(0, 1519 - (effectiveIncome - 25539) * 0.15) : 0;
-      const bpa = Math.max(0, 15705 - Math.max(0, effectiveIncome - 165430) * 15705 / 70000);
-      const bpaSavings = bpa * 0.15;
-
-      const marginalRate = income <= 51268 ? 0.2885 : income <= 57965 ? 0.3325 : 0.3885;
-      const taxSaved = rrsp * marginalRate;
+      const marginalRate = rrsp.marginalRate;
+      const taxSaved = rrsp.taxSaved;
 
       const qcTotal = solidarity + workPremium;
       const fedTotal = bpaSavings + cwb;
@@ -418,8 +578,8 @@
       let html = `<div class="result">
         <h3>${_('resultTitle')}</h3>
         <p><strong>${_('grossIncome')}: $${income.toLocaleString()}</strong></p>
-        ${rrsp > 0 ? `<p>${_('afterRRSP')} ($${rrsp.toLocaleString()}): $${effectiveIncome.toLocaleString()}</p>` : ''}
-        ${rrsp > 0 ? `<p>${_('taxSavings')}: $${taxSaved.toFixed(2)}</p>` : ''}
+        ${rrsp.contribution > 0 ? `<p>${_('afterRRSP')} ($${rrsp.contribution.toLocaleString()}): $${effectiveIncome.toLocaleString()}</p>` : ''}
+        ${rrsp.contribution > 0 ? `<p>${_('taxSavings')} (${Math.round(marginalRate * 100)}%): $${taxSaved.toFixed(2)}</p>` : ''}
         <h4>${_('qcSection')}</h4>
         <p>${_('solidarityCredit')}: $${solidarity.toFixed(2)}</p>
         <p>${_('workPremium')}: $${workPremium.toFixed(2)}</p>
@@ -452,7 +612,7 @@
           effectiveIncome,
           qcCredits: { solidarity, workPremium },
           fedCredits: { bpaSavings, cwb },
-          rrspImpact: { contribution: rrsp, taxSaved }
+          rrspImpact: { contribution: rrsp.contribution, taxSaved, marginalRate }
         }
       };
 
@@ -464,6 +624,8 @@
       document.getElementById('jsonOutput').style.display = 'none';
     }
 
+    loadSavedN8nUrl();
+    setN8nStatus('n8nNoResult');
     setLang('fr');
   </script>
 </body>

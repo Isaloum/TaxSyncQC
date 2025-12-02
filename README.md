@@ -45,6 +45,24 @@ A free, open-source, bilingual (FR/EN) tool to estimate your tax credits and RRS
 - **Web UI:** Drag-and-drop interface at [isaloum.github.io/TaxSyncQC](https://isaloum.github.io/TaxSyncQC)
 - **CLI tool:** \`node cli.js --rl1 "Case A: 60000" --rrsp 5000\`
 
+## 🔗 Connect the web app to n8n (parse email/text)
+
+You can pipe raw payroll emails or copied PDF text through an n8n webhook and let the web app auto-fill the RL-1/T4 fields:
+
+1. **Create an n8n Webhook** node (POST) and grab the URL. Store it in the UI’s “n8n webhook URL” field (it’s saved to `localStorage`).
+2. **Parse the incoming text** in your workflow (e.g., OpenAI/Claude node or Regex). Return JSON like:
+   ```json
+   {
+     "rl1": { "A": 60000, "F": 400, "B.A": 3200 },
+     "t4": { "14": 60000, "44": 400 },
+     "rrsp": 5000
+   }
+   ```
+   Keys map to the on-page field IDs (punctuation is ignored, so `B.A` → `rl1_BA`, `D-1` → `rl1_D1`). Include whichever slip you’re parsing.
+3. **Paste any email/text** into the new “Paste email/text to parse” box and click **Send to n8n**. Once the webhook replies, hit **Apply parsed fields** to load the values into the calculator and run your estimate.
+
+Tip: Add validation/guardrails in n8n (e.g., clamp to positive numbers, mark confidence) before returning the JSON to the app.
+
 ---
 
 ## 📖 How to Use
