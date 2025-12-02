@@ -188,6 +188,7 @@
   <div id="output"></div>
   <div id="jsonOutput" class="json-output" style="display:none;"></div>
 
+  <script src="tax-calculator-bundle.js"></script>
   <script>
     let lang = 'fr';
     let lastCalculationData = null;
@@ -396,19 +397,17 @@
       const data = getFormData();
       const income = data.source === 'RL-1' ? data.rl1.A : data.t4['14'];
       const unionDues = data.source === 'RL-1' ? data.rl1.F : data.t4['44'];
-      const rrsp = parseFloat(document.getElementById('rrspInput').value) || 0;
-      const effectiveIncome = Math.max(0, income - rrsp);
+      const rrspContribution = parseFloat(document.getElementById('rrspInput').value) || 0;
+      const rrsp = TaxCalculator.calculateRrspImpact(income, rrspContribution);
+      const effectiveIncome = rrsp.newIncome;
 
-      const solidarity = effectiveIncome <= 57965 ? 531 : Math.max(0, 531 * (1 - (effectiveIncome - 57965) / 6160));
-      const workPremium = effectiveIncome < 7200 ? 0 : Math.min(728, Math.min(effectiveIncome - 7200, 33100) * 0.26);
+      const solidarity = TaxCalculator.calculateSolidarityCredit(effectiveIncome);
+      const workPremium = TaxCalculator.calculateWorkPremium(effectiveIncome);
+      const cwb = TaxCalculator.calculateCWB(effectiveIncome);
+      const bpaSavings = TaxCalculator.calculateBPA(effectiveIncome);
 
-      const cwb = effectiveIncome <= 25539 ? Math.min(effectiveIncome * 0.27, 1519) :
-                 effectiveIncome <= 35539 ? Math.max(0, 1519 - (effectiveIncome - 25539) * 0.15) : 0;
-      const bpa = Math.max(0, 15705 - Math.max(0, effectiveIncome - 165430) * 15705 / 70000);
-      const bpaSavings = bpa * 0.15;
-
-      const marginalRate = income <= 51268 ? 0.2885 : income <= 57965 ? 0.3325 : 0.3885;
-      const taxSaved = rrsp * marginalRate;
+      const marginalRate = rrsp.marginalRate;
+      const taxSaved = rrsp.taxSaved;
 
       const qcTotal = solidarity + workPremium;
       const fedTotal = bpaSavings + cwb;
@@ -418,8 +417,8 @@
       let html = `<div class="result">
         <h3>${_('resultTitle')}</h3>
         <p><strong>${_('grossIncome')}: $${income.toLocaleString()}</strong></p>
-        ${rrsp > 0 ? `<p>${_('afterRRSP')} ($${rrsp.toLocaleString()}): $${effectiveIncome.toLocaleString()}</p>` : ''}
-        ${rrsp > 0 ? `<p>${_('taxSavings')}: $${taxSaved.toFixed(2)}</p>` : ''}
+        ${rrsp.contribution > 0 ? `<p>${_('afterRRSP')} ($${rrsp.contribution.toLocaleString()}): $${effectiveIncome.toLocaleString()}</p>` : ''}
+        ${rrsp.contribution > 0 ? `<p>${_('taxSavings')} (${Math.round(marginalRate * 100)}%): $${taxSaved.toFixed(2)}</p>` : ''}
         <h4>${_('qcSection')}</h4>
         <p>${_('solidarityCredit')}: $${solidarity.toFixed(2)}</p>
         <p>${_('workPremium')}: $${workPremium.toFixed(2)}</p>
@@ -452,7 +451,7 @@
           effectiveIncome,
           qcCredits: { solidarity, workPremium },
           fedCredits: { bpaSavings, cwb },
-          rrspImpact: { contribution: rrsp, taxSaved }
+          rrspImpact: { contribution: rrsp.contribution, taxSaved, marginalRate }
         }
       };
 
