@@ -1,6 +1,9 @@
-# HTML files
+# HTML files - not linted as they contain inline scripts and mixed content
 index.html
 index.html.backup
+
+# Browser-specific script - excluded to avoid linting browser globals
+fix-calculate.js
 
 # Dependencies
 node_modules/
