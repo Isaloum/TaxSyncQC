@@ -8,6 +8,3 @@ node_modules/
 # Build artifacts
 dist/
 build/
-
-# Browser scripts embedded in HTML (not imported as modules)
-fix-calculate.js
