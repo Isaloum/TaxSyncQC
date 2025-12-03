@@ -7,7 +7,7 @@
   "scripts": {
     "lint": "eslint . --ext .js --ext .html",
     "format": "prettier --write \"**/*.{js,html,css,json,md}\"",
-    "test": "echo \"No tests yet\" && exit 0",
+    "test": "c8 --reporter=text --reporter=lcov node --test tests",
     "prepare": "husky install"
   },
   "repository": {
@@ -38,7 +38,8 @@
     "eslint-config-prettier": "^8.8.0",
     "eslint-plugin-prettier": "^4.2.1",
     "husky": "^8.0.0",
-    "lint-staged": "^16.2.7"
+    "lint-staged": "^16.2.7",
+    "c8": "^7.12.0"
   },
   "lint-staged": {
     "*.js": [
