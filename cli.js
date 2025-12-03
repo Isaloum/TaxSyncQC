@@ -1,12 +1,16 @@
 #!/usr/bin/env node
 import { parseIncomeSlip } from './income-slip-parser.js';
-import { calculateSolidarityCredit, calculateWorkPremium, calculateCWB } from './credit-calculator.js';
+import {
+  calculateSolidarityCredit,
+  calculateWorkPremium,
+  calculateCWB,
+} from './credit-calculator.js';
 import { calculateRrspImpact } from './rrsp-calculator.js';
 
 function estimateFederal(income, hasDependents = false) {
   const cwb = calculateCWB(income, hasDependents);
   // BPA: non-refundable, but we estimate monetary value at 15% Fed rate
-  const bpa = Math.max(0, 15_705 - Math.max(0, income - 165_430) * 15_705 / 70_000);
+  const bpa = Math.max(0, 15_705 - (Math.max(0, income - 165_430) * 15_705) / 70_000);
   const bpaSavings = bpa * 0.15;
   return { cwb: Math.round(cwb * 100) / 100, bpaSavings: Math.round(bpaSavings * 100) / 100 };
 }
@@ -34,7 +38,7 @@ const effectiveIncome = rrsp.newIncome;
 // Quebec credits
 const qc = {
   solidarity: calculateSolidarityCredit(effectiveIncome),
-  workPremium: calculateWorkPremium(effectiveIncome)
+  workPremium: calculateWorkPremium(effectiveIncome),
 };
 
 // Federal credits
@@ -49,7 +53,7 @@ console.log(`\n🧾 RL-1 + Federal + RRSP (2025)\n`);
 console.log(`💼 Revenu brut: $${baseIncome}`);
 if (rrspAmount > 0) {
   console.log(`📉 Après RRSP ($${rrspAmount}): $${effectiveIncome}`);
-  console.log(`💰 Économie d'impôt (${Math.round(rrsp.marginalRate*100)}%): $${rrsp.taxSaved}`);
+  console.log(`💰 Économie d'impôt (${Math.round(rrsp.marginalRate * 100)}%): $${rrsp.taxSaved}`);
 }
 console.log(`\n🇶🇨 Québec:`);
 console.log(`  💰 Crédit solidarité: $${qc.solidarity}`);
@@ -58,4 +62,4 @@ console.log(`\n🇨🇦 Fédéral:`);
 console.log(`  🛡️ Économies BPA: $${fed.bpaSavings}`);
 console.log(`  💵 PTE: $${fed.cwb}`);
 console.log(`\n🎯 Avantage total: $${totalBenefit.toFixed(2)}`);
-slip.warnings().forEach(w => console.log(`⚠️ ${w}`));
+slip.warnings().forEach((w) => console.log(`⚠️ ${w}`));

@@ -1,27 +1,27 @@
 // tax-calculator-bundle.js - Universal calculation module
-(function(global) {
+(function (global) {
   'use strict';
-  
+
   const MARGINAL_RATES = [
     { max: 51268, rate: 0.2885 },
     { max: 57965, rate: 0.3325 },
     { max: 110972, rate: 0.4375 },
     { max: 165430, rate: 0.5125 },
     { max: 235430, rate: 0.5825 },
-    { max: Infinity, rate: 0.6625 }
+    { max: Infinity, rate: 0.6625 },
   ];
 
   function calculateRrspImpact(income, contribution = 0) {
     const limit = Math.min(income, 31560);
     const rrsp = Math.min(contribution, limit);
     const newIncome = Math.max(0, income - rrsp);
-    const rate = MARGINAL_RATES.find(b => income <= b.max)?.rate || 0.6625;
+    const rate = MARGINAL_RATES.find((b) => income <= b.max)?.rate || 0.6625;
     const taxSaved = rrsp * rate;
     return {
       contribution: rrsp,
       newIncome,
       taxSaved: Math.round(taxSaved * 100) / 100,
-      marginalRate: rate
+      marginalRate: rate,
     };
   }
 
@@ -35,7 +35,7 @@
         amount = 0;
       } else {
         const reduction = (income - PHASEOUT_START) / (PHASEOUT_END - PHASEOUT_START);
-        amount *= (1 - reduction);
+        amount *= 1 - reduction;
       }
     }
     return Math.round(amount * 100) / 100;
@@ -61,7 +61,7 @@
       return Math.min(income * 0.27, max);
     } else if (income <= phaseoutStart) {
       return max;
-    } else if (income <= phaseoutStart + (max / 0.15)) {
+    } else if (income <= phaseoutStart + max / 0.15) {
       const excess = income - phaseoutStart;
       return Math.max(0, max - excess * 0.15);
     }
@@ -69,7 +69,7 @@
   }
 
   function calculateBPA(income) {
-    const bpa = Math.max(0, 15705 - Math.max(0, income - 165430) * 15705 / 70000);
+    const bpa = Math.max(0, 15705 - (Math.max(0, income - 165430) * 15705) / 70000);
     return Math.round(bpa * 0.15 * 100) / 100;
   }
 
@@ -79,7 +79,7 @@
     calculateWorkPremium,
     calculateCWB,
     calculateBPA,
-    MARGINAL_RATES
+    MARGINAL_RATES,
   };
 
   if (typeof module !== 'undefined' && module.exports) {

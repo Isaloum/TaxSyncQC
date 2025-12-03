@@ -12,7 +12,7 @@ export function parseIncomeSlip(text) {
     ei: null,
     ppip: null,
     unionDues: null,
-    sin: null
+    sin: null,
   };
 
   // Helper: extract by pattern (supports "Box X", "Case X", "X:")
@@ -48,11 +48,13 @@ export function parseIncomeSlip(text) {
   data.isValid = () => data.employmentIncome !== null && data.employmentIncome > 0;
   data.warnings = () => {
     const w = [];
-    if (data.unionDues === null) 
-      w.push(data.source === 'RL-1' ? 
-        "Cotisations syndicales (case F) manquantes — peuvent être déductibles" : 
-        "Union dues (Box 44) missing — may be deductible");
-    if (!data.sin) w.push("NAS/SIN manquant — obligatoire");
+    if (data.unionDues === null)
+      w.push(
+        data.source === 'RL-1'
+          ? 'Cotisations syndicales (case F) manquantes — peuvent être déductibles'
+          : 'Union dues (Box 44) missing — may be deductible'
+      );
+    if (!data.sin) w.push('NAS/SIN manquant — obligatoire');
     return w;
   };
 

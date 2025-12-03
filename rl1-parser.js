@@ -6,6 +6,8 @@ export function parseRL1Text(text) {
   };
   return {
     income: extract(/Case\s+A[:\s]*([\d,]+\.?\d*)/i),
-    isValid: function() { return this.income > 0; }
+    isValid: function () {
+      return this.income > 0;
+    },
   };
 }

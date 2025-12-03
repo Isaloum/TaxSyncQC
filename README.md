@@ -11,6 +11,7 @@ A free, open-source, bilingual (FR/EN) tool to estimate your tax credits and RRS
 ## ✨ Features
 
 ### 🧮 **Accurate 2025 Calculations**
+
 - **Quebec Credits:**
   - Solidarity Tax Credit (Crédit pour la solidarité) — up to $531
   - Work Premium (Prime au travail) — up to $728 single / $1,456 with dependents
@@ -22,18 +23,21 @@ A free, open-source, bilingual (FR/EN) tool to estimate your tax credits and RRS
   - Shows how RRSP contributions unlock hidden credits
 
 ### 🌍 **Fully Bilingual (FR/EN)**
+
 - French-first design (Quebec default language)
 - One-click toggle to English
 - All labels, results, and warnings translate dynamically
 - Proper Quebec terminology (NAS → SIN, RRQ → QPP, etc.)
 
 ### 🔒 **Privacy-First**
+
 - **100% client-side** — all calculations run in your browser
 - **No data sent to servers** — your tax info never leaves your device
 - **No tracking, no cookies, no accounts** — completely anonymous
 - Open source — audit the code yourself
 
 ### 🎯 **User-Friendly**
+
 - **Simple mode:** 3 essential fields (income, union dues, SIN)
 - **Advanced mode:** Full RL-1/T4 coverage (deductions, benefits, etc.)
 - **Box/line referencing:** See exactly where to find data on your slips
@@ -42,6 +46,7 @@ A free, open-source, bilingual (FR/EN) tool to estimate your tax credits and RRS
 - **Structured JSON export:** For automation/integration with tax software
 
 ### 🚀 **Dual Interface**
+
 - **Web UI:** Drag-and-drop interface at [isaloum.github.io/TaxSyncQC](https://isaloum.github.io/TaxSyncQC)
 - **CLI tool:** \`node cli.js --rl1 "Case A: 60000" --rrsp 5000\`
 
@@ -63,9 +68,11 @@ You can pipe raw payroll emails or copied PDF text through an n8n webhook and le
 
 Tip: Add validation/guardrails in n8n (e.g., clamp to positive numbers, mark confidence) before returning the JSON to the app.
 **Troubleshooting**
+
 - The UI validates the webhook URL (must be http/https) and will flag malformed or empty responses.
 - If the webhook returns non-numeric slip values or no RL-1/T4/RRSP fields, the app will show an error and skip applying them.
 - Some workflows wrap data in a `data` object; the app automatically unwraps this shape.
+
 ---
 
 ## 📖 How to Use
@@ -89,12 +96,14 @@ Tip: Add validation/guardrails in n8n (e.g., clamp to positive numbers, mark con
 ## 🔧 Technical Details
 
 ### **Tech Stack**
+
 - **Frontend:** Vanilla JavaScript (ES6+ modules)
 - **No dependencies** — pure HTML/CSS/JS
 - **No build step** — works directly in any modern browser
 - **Hosting:** GitHub Pages (static site)
 
 ### **Calculation Accuracy**
+
 - ✅ Solidarity Credit: $531 base, phased out $57,965–$64,125
 - ✅ Work Premium: 26% rate on income above $7,200, capped at $728
 - ✅ Federal CWB: 27% build-up, 15% reduction after $25,539
@@ -104,7 +113,8 @@ Tip: Add validation/guardrails in n8n (e.g., clamp to positive numbers, mark con
 
 ## 🛣️ Roadmap
 
-### **Phase 1: MVP** ✅ *DONE*
+### **Phase 1: MVP** ✅ _DONE_
+
 - [x] Basic RL-1/T4 parsing
 - [x] Quebec + Federal credit calculations
 - [x] RRSP impact estimator
@@ -113,11 +123,13 @@ Tip: Add validation/guardrails in n8n (e.g., clamp to positive numbers, mark con
 - [x] GitHub Pages deployment
 
 ### **Phase 2: Enhanced UX** (Next 2 weeks)
+
 - [ ] **PDF auto-extraction** — drag & drop your RL-1/T4 PDF → auto-fill boxes
 - [ ] **RRSP optimizer chart** — visualize tax savings vs contribution
 - [ ] **Multi-year comparison** — save & compare 2024 vs 2025
 
 ### **Phase 3: Pro Features** (Next month)
+
 - [ ] **CRA/RQ XML export** — generate files for UFile/TurboTax
 - [ ] **More credits:** Childcare, Medical, CCB
 - [ ] **Multi-province support** — Ontario, BC, Alberta
