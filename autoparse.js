@@ -4,7 +4,7 @@
     try {
       const p = new URL(url);
       return ['http:', 'https:'].includes(p.protocol);
-    } catch (e) {
+    } catch (_e) {
       return false;
     }
   }
@@ -44,7 +44,7 @@
       document.getElementById('applyN8nBtn').disabled = false;
       document.getElementById('n8nStatus') &&
         (document.getElementById('n8nStatus').textContent = 'Fields received');
-    } catch (e) {
+    } catch (_e) {
       document.getElementById('n8nStatus') &&
         (document.getElementById('n8nStatus').textContent = 'Could not reach webhook');
     }

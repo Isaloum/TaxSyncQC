@@ -7,7 +7,9 @@
   "scripts": {
     "lint": "eslint . --ext .js --ext .html",
     "format": "prettier --write \"**/*.{js,html,css,json,md}\"",
-    "test": "c8 --reporter=text --reporter=lcov node --test",
+    "test": "c8 --reporter=text --reporter=lcov node --test tests/*.test.js",
+    "test:e2e": "playwright test",
+    "test:all": "npm test && npm run test:e2e",
     "prepare": "husky install"
   },
   "repository": {
