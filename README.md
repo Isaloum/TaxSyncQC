@@ -29,6 +29,24 @@ A free, open-source, bilingual (FR/EN) tool to estimate your tax credits and RRS
 - All labels, results, and warnings translate dynamically
 - Proper Quebec terminology (NAS → SIN, RRQ → QPP, etc.)
 
+---
+
+## 📸 Screenshots
+
+### Calculator Interface (English)
+![Calculator Interface - English](docs/screenshots/calculator-interface-en.png)
+
+### Bilingual Support (Français)
+![Calculator Interface - French](docs/screenshots/calculator-interface-fr.png)
+
+### Results Display
+![Tax Credits Results](docs/screenshots/results-display.png)
+
+> **Live Demo:** Try it yourself at [https://isaloum.github.io/TaxSyncQC/](https://isaloum.github.io/TaxSyncQC/)
+
+---
+
+
 ### 🔒 **Privacy-First**
 
 - **100% client-side** — all calculations run in your browser
