@@ -64,9 +64,10 @@
         top: 0;
         z-index: 100;
         background: var(--bg);
-        padding: 1rem 0;
+        padding: 1rem 1.5rem;
         margin-top: -1rem;
         box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+        border-radius: 8px;
       }
 
       .brand {
@@ -371,8 +372,8 @@
         <div class="brand">
           <span style="font-size: 1.7rem">💰</span>
           <div>
-            <div>TaxSyncQC</div>
-            <small class="hint">Crédits Québec + Fédéral 2025</small>
+            <div data-i18n="headerTitle">TaxSyncQC</div>
+            <small class="hint" data-i18n="headerSubtitle">Crédits Québec + Fédéral 2025</small>
           </div>
         </div>
         <div class="lang-toggle">
@@ -739,6 +740,8 @@
 
       let lang = 'fr';      const translations = {
         en: {
+          headerTitle: 'TaxSyncQC',
+          headerSubtitle: 'Quebec + Federal Tax Credits 2025',
           title: '💰 TaxSyncQC — Official Quebec 2025 Estimator',
           subtitle:
             'Based on <strong>RL-1-T(2025-10)</strong> and <strong>T4 (2025)</strong> from Revenu Québec and CRA.',
@@ -816,6 +819,8 @@
           footerMoreProjects: 'More projects →',
         },
         fr: {
+          headerTitle: 'TaxSyncQC',
+          headerSubtitle: 'Crédits Québec + Fédéral 2025',
           title: '💰 TaxSyncQC — Estimation officielle Québec 2025',
           subtitle:
             "Basé sur les documents <strong>RL-1-T(2025-10)</strong> et <strong>T4 (2025)</strong> de Revenu Québec et l'ARC.",
