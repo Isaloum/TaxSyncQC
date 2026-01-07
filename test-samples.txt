@@ -1,0 +1,100 @@
+# Sample Tax Slips for Testing n8n Integration
+
+## Sample 1: RL-1 (Quebec) - French
+═══════════════════════════════════════════════════════════════════
+
+RELEVÉ 1 - REVENUS D'EMPLOI 2025
+
+Employeur: ABC Company Inc.
+NAS: 123-456-789
+
+Case A - Revenus d'emploi: 60 000,00 $
+Case F - Cotisations syndicales: 425,00 $
+Case B.A - Cotisations RRQ: 3 200,50 $
+Case H - Impôt du Québec retenu: 8 500,00 $
+
+REER suggéré: 5 000 $
+
+═══════════════════════════════════════════════════════════════════
+
+
+## Sample 2: T4 (Federal) - English
+═══════════════════════════════════════════════════════════════════
+
+STATEMENT OF REMUNERATION PAID - T4 2025
+
+Box 14 - Employment income: $60,000.00
+Box 16 - Employee's CPP contributions: $3,500.00
+Box 44 - Union dues: $425.00
+Box 55 - CPP/QPP pensionable earnings: $60,000.00
+
+RRSP contribution: $5,000
+
+═══════════════════════════════════════════════════════════════════
+
+
+## Sample 3: Both RL-1 and T4
+═══════════════════════════════════════════════════════════════════
+
+Tax Year 2025 - Employee: John Smith
+
+RL-1 (Quebec):
+  Case A: 45,000
+  Case F: 300
+
+T4 (Federal):
+  Box 14: 45,000
+  Box 44: 300
+  Box 16: 2,500
+
+RRSP: 3,500
+
+═══════════════════════════════════════════════════════════════════
+
+
+## Sample 4: Low Income Example
+═══════════════════════════════════════════════════════════════════
+
+Case A (Revenus d'emploi): 25 000 $
+Case F (Cotisations syndicales): 150 $
+
+═══════════════════════════════════════════════════════════════════
+
+
+## Sample 5: High Income with RRSP
+═══════════════════════════════════════════════════════════════════
+
+Box A - Employment income: $85,000
+Box F - Union dues: $650
+RRSP contribution: $15,000
+
+═══════════════════════════════════════════════════════════════════
+
+
+## Expected Results for Sample 1:
+
+When you paste Sample 1, the webhook should extract:
+
+{
+  "rl1": {
+    "A": 60000,
+    "F": 425,
+    "B.A": 3200.50,
+    "H": 8500
+  },
+  "t4": null,
+  "rrsp": 5000,
+  "slipType": "RL-1",
+  "success": true
+}
+
+Then TaxSyncQC should auto-fill:
+- Box A: 60000
+- Box F: 425
+- RRSP: 5000
+
+And when you click "Estimate Credits", you should see approximately:
+- Total Benefit: $5,802
+- Cash Refund: $728
+
+═══════════════════════════════════════════════════════════════════
