@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>n8n Integration Test</title>
+  <style>
+    body { font-family: monospace; padding: 20px; background: #1e1e1e; color: #00ff00; }
+    .pass { color: #00ff00; }
+    .fail { color: #ff0000; }
+    .info { color: #00aaff; }
+    button { padding: 10px 20px; margin: 10px; font-size: 16px; cursor: pointer; }
+    #output { margin-top: 20px; border: 1px solid #00ff00; padding: 20px; }
+    pre { background: #000; padding: 10px; overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <h1>🔗 n8n Integration Test</h1>
+
+  <button onclick="testWebhook()">1. Test Webhook Directly</button>
+  <button onclick="testInIframe()">2. Test in TaxSyncQC (iframe)</button>
+  <button onclick="testCORS()">3. Test CORS</button>
+
+  <div id="output"></div>
+
+  <script>
+    const log = (msg, type = 'info') => {
+      const output = document.getElementById('output');
+      const span = document.createElement('div');
+      span.className = type;
+      span.textContent = msg;
+      output.appendChild(span);
+    };
+
+    async function testWebhook() {
+      document.getElementById('output').innerHTML = '';
+      log('Testing webhook at http://localhost:3000/webhook/parse-slip...', 'info');
+
+      try {
+        const response = await fetch('http://localhost:3000/webhook/parse-slip', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text: 'Case A: 60000\\nCase F: 425',
+            lang: 'fr',
+            source: 'test'
+          })
+        });
+
+        log(`✅ Response status: ${response.status}`, 'pass');
+
+        const data = await response.json();
+        log('✅ Response body:', 'pass');
+        log(JSON.stringify(data, null, 2), 'info');
+
+        if (data.rl1 && data.rl1.A === 60000) {
+          log('✅ WEBHOOK WORKS! Parsed correctly.', 'pass');
+        } else {
+          log('❌ Webhook responded but parsing failed', 'fail');
+        }
+
+      } catch (error) {
+        log(`❌ ERROR: ${error.message}`, 'fail');
+        log(`Error type: ${error.name}`, 'fail');
+        if (error.message.includes('CORS')) {
+          log('This is a CORS error - webhook needs CORS headers', 'fail');
+        }
+      }
+    }
+
+    async function testCORS() {
+      document.getElementById('output').innerHTML = '';
+      log('Testing CORS headers...', 'info');
+
+      try {
+        const response = await fetch('http://localhost:3000/webhook/parse-slip', {
+          method: 'OPTIONS'
+        });
+
+        const headers = {};
+        response.headers.forEach((value, key) => {
+          headers[key] = value;
+        });
+
+        log('CORS Headers:', 'info');
+        log(JSON.stringify(headers, null, 2), 'info');
+
+        if (headers['access-control-allow-origin']) {
+          log('✅ CORS is enabled', 'pass');
+        } else {
+          log('❌ CORS is NOT enabled', 'fail');
+        }
+
+      } catch (error) {
+        log(`❌ CORS test failed: ${error.message}`, 'fail');
+      }
+    }
+
+    async function testInIframe() {
+      document.getElementById('output').innerHTML = '';
+      log('Opening TaxSyncQC in new window for manual test...', 'info');
+      log('', 'info');
+      log('Instructions:', 'info');
+      log('1. In the new window, scroll to "Connect to n8n"', 'info');
+      log('2. Enter URL: http://localhost:3000/webhook/parse-slip', 'info');
+      log('3. Paste: Case A: 60000', 'info');
+      log('4. Click "Send to n8n"', 'info');
+      log('5. Check browser console (F12) for errors', 'info');
+
+      window.open('http://localhost:8080/index.html', '_blank');
+    }
+  </script>
+</body>
+</html>
