@@ -13,7 +13,7 @@
         --success: #0f9d58;
         --warning: #f97316;
         --text: #0f172a;
-        --muted: #64748b;
+        --muted: #5f6b7a;
         --border: #e2e8f0;
         --radius: 12px;
         --shadow: 0 10px 40px rgba(15, 23, 42, 0.08);
@@ -353,17 +353,81 @@
         font-size: 0.95rem;
         text-align: center;
       }
-    /* Footer */
-    footer{margin-top:3rem;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:2rem}
-    .footer-content{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1.5rem}
-    .footer-left{display:flex;flex-direction:column;gap:0.5rem}
-    .footer-title{font-size:1.25rem;font-weight:700;color:var(--accent)}
-    .footer-subtitle{color:var(--muted);font-size:0.9rem}
-    .footer-right{display:flex;gap:1rem;align-items:center;flex-wrap:wrap}
-    .footer-link{display:inline-flex;align-items:center;gap:0.5rem;padding:0.5rem 1rem;background:rgba(37,99,235,0.05);border:1px solid var(--border);border-radius:8px;color:var(--text);text-decoration:none;font-weight:600;transition:all 0.2s;font-size:0.9rem}
-    .footer-link:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-2px);box-shadow:0 4px 12px rgba(37,99,235,0.15)}
-    .tech-badge{display:inline-block;padding:0.25rem 0.75rem;background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.2);border-radius:6px;font-size:0.75rem;color:var(--accent);font-weight:600}
-    @media(max-width:768px){.footer-content{flex-direction:column;text-align:center}.footer-right{justify-content:center}}
+      /* Footer */
+      footer {
+        margin-top: 3rem;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 2rem;
+      }
+      .footer-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+      }
+      .footer-left {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .footer-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--accent);
+      }
+      .footer-subtitle {
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      .footer-right {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .footer-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: rgba(37, 99, 235, 0.05);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: var(--text);
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.2s;
+        font-size: 0.9rem;
+      }
+      .footer-link:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+      }
+      .tech-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        background: rgba(37, 99, 235, 0.08);
+        border: 1px solid rgba(37, 99, 235, 0.2);
+        border-radius: 6px;
+        font-size: 0.75rem;
+        color: var(--accent);
+        font-weight: 600;
+      }
+      @media (max-width: 768px) {
+        .footer-content {
+          flex-direction: column;
+          text-align: center;
+        }
+        .footer-right {
+          justify-content: center;
+        }
+      }
     </style>
   </head>
   <body>
@@ -409,7 +473,14 @@
             RL-1 (Revenu Québec)
           </button>
           <button class="tab-btn" onclick="showTab('t4', event)" data-tab="t4">T4 (ARC)</button>
-          <button class="tab-btn" onclick="showTab('both', event)" data-tab="both" data-i18n="tabBoth">Les deux</button>
+          <button
+            class="tab-btn"
+            onclick="showTab('both', event)"
+            data-tab="both"
+            data-i18n="tabBoth"
+          >
+            Les deux
+          </button>
         </div>
 
         <div class="surface">
@@ -715,19 +786,100 @@
         </div>
       </main>
 
-      <footer style="background:#fff;border-top:2px solid #e2e8f0;padding:2rem 0;margin-top:3rem;text-align:center">
-        <div style="max-width:1200px;margin:0 auto;padding:0 1rem;color:#64748b;font-size:0.9rem">
-          <div>💰 <strong style="color:#2563eb">TaxSyncQC</strong> — <span data-i18n="footerBuiltBy">Construit par Ihab Saloum</span> • <span data-i18n="footerOpenSource">Projet Open Source</span></div>
-          <div style="margin:0.75rem 0">
-            <span style="background:rgba(37,99,235,0.08);padding:0.25rem 0.6rem;border-radius:4px;margin:0 0.25rem;font-size:0.75rem;color:#2563eb">JavaScript</span>
-            <span style="background:rgba(37,99,235,0.08);padding:0.25rem 0.6rem;border-radius:4px;margin:0 0.25rem;font-size:0.75rem;color:#2563eb">HTML5</span>
-            <span style="background:rgba(37,99,235,0.08);padding:0.25rem 0.6rem;border-radius:4px;margin:0 0.25rem;font-size:0.75rem;color:#2563eb">Québec Tax</span>
-            <span style="background:rgba(37,99,235,0.08);padding:0.25rem 0.6rem;border-radius:4px;margin:0 0.25rem;font-size:0.75rem;color:#2563eb">Bilingue</span>
-            <span style="background:rgba(37,99,235,0.08);padding:0.25rem 0.6rem;border-radius:4px;margin:0 0.25rem;font-size:0.75rem;color:#2563eb">100% Client-Side</span>
+      <footer
+        style="
+          background: #fff;
+          border-top: 2px solid #e2e8f0;
+          padding: 2rem 0;
+          margin-top: 3rem;
+          text-align: center;
+        "
+      >
+        <div
+          style="
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            color: var(--muted);
+            font-size: 0.9rem;
+          "
+        >
+          <div>
+            💰 <strong style="color: #2563eb">TaxSyncQC</strong> —
+            <span data-i18n="footerBuiltBy">Construit par Ihab Saloum</span> •
+            <span data-i18n="footerOpenSource">Projet Open Source</span>
+          </div>
+          <div style="margin: 0.75rem 0">
+            <span
+              style="
+                background: rgba(37, 99, 235, 0.08);
+                padding: 0.25rem 0.6rem;
+                border-radius: 4px;
+                margin: 0 0.25rem;
+                font-size: 0.75rem;
+                color: #2563eb;
+              "
+              >JavaScript</span
+            >
+            <span
+              style="
+                background: rgba(37, 99, 235, 0.08);
+                padding: 0.25rem 0.6rem;
+                border-radius: 4px;
+                margin: 0 0.25rem;
+                font-size: 0.75rem;
+                color: #2563eb;
+              "
+              >HTML5</span
+            >
+            <span
+              style="
+                background: rgba(37, 99, 235, 0.08);
+                padding: 0.25rem 0.6rem;
+                border-radius: 4px;
+                margin: 0 0.25rem;
+                font-size: 0.75rem;
+                color: #2563eb;
+              "
+              >Québec Tax</span
+            >
+            <span
+              style="
+                background: rgba(37, 99, 235, 0.08);
+                padding: 0.25rem 0.6rem;
+                border-radius: 4px;
+                margin: 0 0.25rem;
+                font-size: 0.75rem;
+                color: #2563eb;
+              "
+              >Bilingue</span
+            >
+            <span
+              style="
+                background: rgba(37, 99, 235, 0.08);
+                padding: 0.25rem 0.6rem;
+                border-radius: 4px;
+                margin: 0 0.25rem;
+                font-size: 0.75rem;
+                color: #2563eb;
+              "
+              >100% Client-Side</span
+            >
           </div>
           <div>
-            <a href="https://github.com/Isaloum/TaxSyncQC" target="_blank" style="color:#2563eb;text-decoration:none;margin:0 0.5rem"><span data-i18n="footerViewSource">Voir le code source</span></a> •
-            <a href="https://github.com/Isaloum" target="_blank" style="color:#2563eb;text-decoration:none;margin:0 0.5rem"><span data-i18n="footerMoreProjects">Plus de projets →</span></a>
+            <a
+              href="https://github.com/Isaloum/TaxSyncQC"
+              target="_blank"
+              style="color: #2563eb; text-decoration: none; margin: 0 0.5rem"
+              ><span data-i18n="footerViewSource">Voir le code source</span></a
+            >
+            •
+            <a
+              href="https://github.com/Isaloum"
+              target="_blank"
+              style="color: #2563eb; text-decoration: none; margin: 0 0.5rem"
+              ><span data-i18n="footerMoreProjects">Plus de projets →</span></a
+            >
           </div>
         </div>
       </footer>
@@ -739,7 +891,8 @@
     <script>
       let lastN8nResult = null;
 
-      let lang = 'fr';      const translations = {
+      let lang = 'fr';
+      const translations = {
         en: {
           headerTitle: 'TaxSyncQC',
           headerSubtitle: 'Quebec + Federal Tax Credits 2025',
@@ -1176,14 +1329,17 @@
 
       // Initialize calculate function
       let calculate;
-      if (typeof window.initFixCalculate === 'function' && typeof window.TaxCalculator === 'object') {
+      if (
+        typeof window.initFixCalculate === 'function' &&
+        typeof window.TaxCalculator === 'object'
+      ) {
         calculate = window.initFixCalculate(window.TaxCalculator, _);
         window.calculate = calculate;
         console.log('[TaxSyncQC] Calculate function ready!');
       } else {
         console.error('[TaxSyncQC] Missing dependencies:', {
           initFixCalculate: typeof window.initFixCalculate,
-          TaxCalculator: typeof window.TaxCalculator
+          TaxCalculator: typeof window.TaxCalculator,
         });
       }
 
