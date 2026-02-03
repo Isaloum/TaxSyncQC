@@ -4,8 +4,12 @@ import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import prisma from '../config/database';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
+
+if (!JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable is required');
+}
 
 const registerAccountantSchema = z.object({
   email: z.string().email('Invalid email address'),

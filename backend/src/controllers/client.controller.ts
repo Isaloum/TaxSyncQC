@@ -58,14 +58,6 @@ export const updateProfile = async (req: Request, res: Response) => {
 
     const validatedData = updateProfileSchema.parse(req.body);
 
-    const client = await prisma.client.findUnique({
-      where: { id: req.user.sub },
-    });
-
-    if (!client) {
-      return res.status(404).json({ error: 'Client not found' });
-    }
-
     const updatedClient = await prisma.client.update({
       where: { id: req.user.sub },
       data: validatedData,

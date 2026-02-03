@@ -1,4 +1,4 @@
-import express, { Request, Response } from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth.routes';
@@ -31,7 +31,7 @@ app.use((req: Request, res: Response) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
-app.use((err: Error, req: Request, res: Response, next: any) => {
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error('Unhandled error:', err);
   res.status(500).json({ error: 'Internal server error' });
 });

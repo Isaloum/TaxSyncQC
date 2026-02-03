@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import crypto from 'crypto';
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -14,7 +15,8 @@ export const generateTemporaryPassword = (): string => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
   let password = '';
   for (let i = 0; i < 12; i++) {
-    password += chars.charAt(Math.floor(Math.random() * chars.length));
+    const randomIndex = crypto.randomInt(0, chars.length);
+    password += chars.charAt(randomIndex);
   }
   return password;
 };
