@@ -2,6 +2,33 @@
 
 Complete backend infrastructure for TaxSyncQC authentication and user onboarding system.
 
+## 🚀 Quick Start
+
+**New to TaxSyncQC?** Get started in under 5 minutes! See **[QUICKSTART.md](QUICKSTART.md)** for step-by-step instructions.
+
+### One-Command Setup
+
+```bash
+cd backend
+npm run setup
+```
+
+This automated script will:
+- Create `.env` from template
+- Install all dependencies
+- Generate Prisma client
+- Set up your Supabase database
+
+Then update `.env` with your Supabase credentials and run:
+
+```bash
+npm run dev
+```
+
+**For detailed setup instructions, troubleshooting, and configuration guides, see [QUICKSTART.md](QUICKSTART.md)**
+
+---
+
 ## 🎯 Features
 
 - **Authentication System**
@@ -41,6 +68,8 @@ Complete backend infrastructure for TaxSyncQC authentication and user onboarding
 backend/
 ├── prisma/
 │   └── schema.prisma           # Database schema
+├── scripts/
+│   └── test-api.js             # API test script
 ├── src/
 │   ├── config/
 │   │   └── database.ts         # Prisma client configuration
@@ -61,20 +90,46 @@ backend/
 │   └── server.ts               # Main application entry point
 ├── .env.example                # Environment variables template
 ├── .gitignore
+├── QUICKSTART.md               # Quick start guide
+├── README.md                   # This file
 ├── package.json
-├── tsconfig.json
-└── README.md
+├── setup.sh                    # Automated setup script
+└── tsconfig.json
 ```
 
 ## 🚀 Getting Started
 
+> **Quick Start:** See [QUICKSTART.md](QUICKSTART.md) for a streamlined setup guide with Supabase.
+
 ### Prerequisites
 
 - Node.js (v18 or higher)
-- PostgreSQL database
-- SMTP email service (Gmail, SendGrid, etc.)
+- Supabase account (PostgreSQL database with connection pooling)
+- SMTP email service (Gmail with App Password, SendGrid, etc.)
 
-### Installation
+### Automated Setup
+
+Run the automated setup script:
+
+```bash
+cd backend
+npm run setup
+```
+
+This will:
+1. Create `.env` from `.env.example` (if it doesn't exist)
+2. Install npm dependencies
+3. Generate Prisma client
+4. Push database schema to Supabase
+
+After setup, edit `.env` with your credentials:
+- Replace `[YOUR-PASSWORD]` in `DATABASE_URL` and `DIRECT_URL`
+- Set your `JWT_SECRET` (32+ characters)
+- Configure SMTP credentials for email
+
+### Manual Installation
+
+If you prefer manual setup:
 
 1. **Install dependencies:**
    ```bash
@@ -87,20 +142,25 @@ backend/
    cp .env.example .env
    ```
 
-   Edit `.env` with your configuration:
+   Edit `.env` with your Supabase configuration:
    ```env
-   DATABASE_URL="postgresql://user:password@localhost:5432/taxsyncqc?schema=public"
-   JWT_SECRET="your-secret-key-here"
+   # Get from Supabase Dashboard → Settings → Database
+   DATABASE_URL="postgresql://postgres.swkqwqtgbxymyhcnhmfv:[YOUR-PASSWORD]@aws-0-us-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
+   DIRECT_URL="postgresql://postgres.swkqwqtgbxymyhcnhmfv:[YOUR-PASSWORD]@aws-0-us-east-1.pooler.supabase.com:5432/postgres"
+   
+   JWT_SECRET="your-secret-key-here-at-least-32-characters"
    SMTP_HOST="smtp.gmail.com"
    SMTP_USER="your-email@gmail.com"
-   SMTP_PASS="your-app-password"
+   SMTP_PASS="your-gmail-app-password"
    ```
 
 3. **Setup database:**
    ```bash
    npx prisma generate
-   npx prisma migrate dev --name init
+   npx prisma db push
    ```
+   
+   > **Note:** We use `db push` instead of `migrate dev` for Supabase as it's better suited for cloud databases with connection pooling.
 
 4. **Start development server:**
    ```bash
@@ -286,18 +346,22 @@ When an accountant creates a client:
 
 ### Available Scripts
 
+- `npm run setup` - Run automated setup (install, generate, migrate)
 - `npm run dev` - Start development server with auto-reload
 - `npm run build` - Build for production
 - `npm start` - Start production server
+- `npm run test:api` - Test API endpoints (register & login)
+- `npm run db:push` - Push Prisma schema to database
+- `npm run db:studio` - Open Prisma Studio GUI
 - `npm run prisma:generate` - Generate Prisma client
-- `npm run prisma:migrate` - Run database migrations
-- `npm run prisma:studio` - Open Prisma Studio GUI
+- `npm run prisma:migrate` - Run database migrations (for local dev)
 
 ### Environment Variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `DATABASE_URL` | PostgreSQL connection string | - |
+| `DATABASE_URL` | Supabase pooled connection (transaction pooler) | - |
+| `DIRECT_URL` | Supabase direct connection (for migrations) | - |
 | `PORT` | Server port | 3001 |
 | `NODE_ENV` | Environment (development/production) | development |
 | `JWT_SECRET` | Secret key for JWT signing | - |
@@ -307,12 +371,22 @@ When an accountant creates a client:
 | `SMTP_PORT` | SMTP server port | 587 |
 | `SMTP_SECURE` | Use TLS | false |
 | `SMTP_USER` | SMTP username | - |
-| `SMTP_PASS` | SMTP password | - |
+| `SMTP_PASS` | SMTP password (use App Password for Gmail) | - |
 | `EMAIL_FROM` | Sender email address | noreply@taxsyncqc.com |
 | `APP_NAME` | Application name | TaxSyncQC |
 | `LOGIN_URL` | Login page URL | http://localhost:3000/login |
 
 ## 📝 Testing the API
+
+### Using the Test Script
+
+The easiest way to test:
+
+```bash
+npm run test:api
+```
+
+This automatically tests accountant registration and login endpoints.
 
 ### Using curl
 
@@ -352,10 +426,17 @@ curl -X POST http://localhost:3001/api/accountant/clients \
 
 ## 🔍 Troubleshooting
 
+> **For detailed troubleshooting, see [QUICKSTART.md](QUICKSTART.md#-troubleshooting)**
+
 ### Database Connection Issues
-- Verify PostgreSQL is running
-- Check `DATABASE_URL` in `.env`
-- Run `npx prisma migrate dev` to create database
+- Verify Supabase credentials in `.env`
+- Ensure you replaced `[YOUR-PASSWORD]` in both `DATABASE_URL` and `DIRECT_URL`
+- Check that your IP is allowed in Supabase Dashboard
+- Run `npm run db:push` to sync schema
+
+### Prisma Client Issues
+- Run `npx prisma generate` to regenerate the client
+- Delete `node_modules` and run `npm install` if issues persist
 
 ### Email Not Sending
 - Verify SMTP credentials in `.env`
