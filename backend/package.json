@@ -7,6 +7,10 @@
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
+    "setup": "chmod +x setup.sh && ./setup.sh",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio",
+    "test:api": "node scripts/test-api.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio"
