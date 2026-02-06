@@ -145,8 +145,9 @@ If you prefer manual setup:
    Edit `.env` with your Supabase configuration:
    ```env
    # Get from Supabase Dashboard → Settings → Database
-   DATABASE_URL="postgresql://postgres.swkqwqtgbxymyhcnhmfv:[YOUR-PASSWORD]@aws-0-us-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
-   DIRECT_URL="postgresql://postgres.swkqwqtgbxymyhcnhmfv:[YOUR-PASSWORD]@aws-0-us-east-1.pooler.supabase.com:5432/postgres"
+   # Replace YOUR-PROJECT-REF with your actual project reference
+   DATABASE_URL="postgresql://postgres.YOUR-PROJECT-REF:[YOUR-PASSWORD]@aws-0-us-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
+   DIRECT_URL="postgresql://postgres.YOUR-PROJECT-REF:[YOUR-PASSWORD]@aws-0-us-east-1.pooler.supabase.com:5432/postgres"
    
    JWT_SECRET="your-secret-key-here-at-least-32-characters"
    SMTP_HOST="smtp.gmail.com"

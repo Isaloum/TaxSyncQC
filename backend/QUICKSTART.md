@@ -28,23 +28,24 @@ This will:
 ### 1. Get Your Supabase Credentials
 
 1. Go to [Supabase Dashboard](https://supabase.com/dashboard)
-2. Open your project: `swkqwqtgbxymyhcnhmfv`
+2. Open your project (or create a new one)
 3. Navigate to **Settings** → **Database**
 4. Scroll down to **Connection string**
 5. Copy both connection strings:
    - **Transaction pooler** (for DATABASE_URL)
    - **Session pooler** (for DIRECT_URL)
 
-**Important:** The connection strings will have `[YOUR-PASSWORD]` placeholder. Replace this with your actual database password.
+**Important:** The connection strings will have `[YOUR-PASSWORD]` placeholder. Replace this with your actual database password. Also replace the project reference placeholder with your actual project ID.
 
 ### 2. Configure Environment Variables
 
 After running `npm run setup`, edit the created `.env` file:
 
 ```env
+# Replace YOUR-PROJECT-REF with your Supabase project reference
 # Replace [YOUR-PASSWORD] with your actual Supabase password
-DATABASE_URL="postgresql://postgres.swkqwqtgbxymyhcnhmfv:YOUR_ACTUAL_PASSWORD@aws-0-us-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
-DIRECT_URL="postgresql://postgres.swkqwqtgbxymyhcnhmfv:YOUR_ACTUAL_PASSWORD@aws-0-us-east-1.pooler.supabase.com:5432/postgres"
+DATABASE_URL="postgresql://postgres.YOUR-PROJECT-REF:YOUR_ACTUAL_PASSWORD@aws-0-us-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
+DIRECT_URL="postgresql://postgres.YOUR-PROJECT-REF:YOUR_ACTUAL_PASSWORD@aws-0-us-east-1.pooler.supabase.com:5432/postgres"
 
 # Generate a secure JWT secret (use any random string, at least 32 characters)
 JWT_SECRET="your-super-secret-jwt-key-min-32-chars-long"
