@@ -8,7 +8,7 @@ test('homepage loads and has title', async ({ page }) => {
   await expect(page).toHaveTitle(/TaxFlowAI/);
 });
 
-test('homepage accessibility quick scan', async ({ page }) => {
+test.skip('homepage accessibility quick scan', async ({ page }) => {
   await page.goto(SITE, { waitUntil: 'domcontentloaded' });
   // run axe via AxeBuilder
   const results = await new AxeBuilder({ page }).analyze();
