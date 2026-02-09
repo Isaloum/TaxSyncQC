@@ -27,9 +27,8 @@ jobs:
       - name: Lint
         run: npm run lint --if-present
       
-      - name: Test (excluding Playwright tests)
-        run: c8 --reporter=text --reporter=lcov node --test tests/*.test.js --test-name-pattern "^(?!.*accessibility).*"
-        continue-on-error: false
+      - name: Test
+        run: npm test --if-present
       
       - name: Upload coverage
         if: always()
