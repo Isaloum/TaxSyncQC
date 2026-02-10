@@ -12,7 +12,7 @@ interface Document {
   uploadedAt: string;
   reviewStatus: string;
   extractionStatus: string;
-  extractedData: any;
+  extractedData: Record<string, unknown>;
   reviewedAt?: string;
   rejectionReason?: string;
 }
@@ -25,6 +25,15 @@ interface Client {
   province: string;
 }
 
+interface Validation {
+  id: string;
+  ruleCode: string;
+  status: string;
+  message?: string;
+  missingDocType?: string;
+  checkedAt: string;
+}
+
 interface TaxYear {
   id: string;
   year: number;
@@ -35,7 +44,7 @@ interface TaxYear {
   reviewNotes?: string;
   client: Client;
   documents: Document[];
-  validations: any[];
+  validations: Validation[];
 }
 
 export default function TaxYearReviewPage() {
@@ -54,6 +63,7 @@ export default function TaxYearReviewPage() {
     if (taxYearId) {
       fetchTaxYearData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taxYearId]);
 
   const fetchTaxYearData = async () => {
@@ -201,7 +211,6 @@ export default function TaxYearReviewPage() {
 
   const pendingCount = taxYear.documents.filter(d => d.reviewStatus === 'pending').length;
   const approvedCount = taxYear.documents.filter(d => d.reviewStatus === 'approved').length;
-  const rejectedCount = taxYear.documents.filter(d => d.reviewStatus === 'rejected').length;
 
   return (
     <div className="container mx-auto p-6 max-w-7xl">

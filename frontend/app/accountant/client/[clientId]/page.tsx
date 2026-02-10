@@ -13,6 +13,15 @@ interface Document {
   extractionStatus: string;
 }
 
+interface Validation {
+  id: string;
+  ruleCode: string;
+  status: string;
+  message?: string;
+  missingDocType?: string;
+  checkedAt: string;
+}
+
 interface TaxYear {
   id: string;
   year: number;
@@ -21,7 +30,7 @@ interface TaxYear {
   submittedAt?: string;
   reviewedAt?: string;
   documents: Document[];
-  validations: any[];
+  validations: Validation[];
 }
 
 interface Client {
@@ -47,6 +56,7 @@ export default function ClientDetailPage() {
     if (clientId) {
       fetchClientData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clientId]);
 
   const fetchClientData = async () => {
