@@ -28,10 +28,6 @@ export default function ProfilePage() {
 
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    loadProfile();
-  }, []);
-
   const loadProfile = async () => {
     try {
       const res = await APIClient.getCompleteness(year);
@@ -42,6 +38,11 @@ export default function ProfilePage() {
       console.error('Load profile error:', error);
     }
   };
+
+  useEffect(() => {
+    loadProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleChange = (key: string, value: any) => {
     setProfile({ ...profile, [key]: value });

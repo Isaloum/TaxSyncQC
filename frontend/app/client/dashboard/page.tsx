@@ -9,10 +9,6 @@ export default function ClientDashboard() {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadProfile();
-  }, []);
-
   const loadProfile = async () => {
     try {
       const res = await APIClient.getProfile();
@@ -23,6 +19,11 @@ export default function ClientDashboard() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (loading) return <div className="p-6">Loading...</div>;
 

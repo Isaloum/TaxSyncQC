@@ -14,10 +14,6 @@ export default function TaxYearPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [docType, setDocType] = useState('T4');
 
-  useEffect(() => {
-    loadCompleteness();
-  }, [year]);
-
   const loadCompleteness = async () => {
     try {
       const res = await APIClient.getCompleteness(year);
@@ -26,6 +22,11 @@ export default function TaxYearPage() {
       console.error('Load error:', error);
     }
   };
+
+  useEffect(() => {
+    loadCompleteness();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [year]);
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
