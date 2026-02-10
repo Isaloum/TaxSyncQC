@@ -24,13 +24,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const checkAuth = async () => {
     try {
-      const token = localStorage.getItem('auth_token');
-      if (token) {
-        const res = await APIClient.getProfile();
-        setUser(res.data);
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('auth_token');
+        if (token) {
+          const res = await APIClient.getProfile();
+          setUser(res.data);
+        }
       }
     } catch (error) {
-      localStorage.removeItem('auth_token');
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('auth_token');
+      }
     } finally {
       setLoading(false);
     }
