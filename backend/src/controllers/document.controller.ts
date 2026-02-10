@@ -125,7 +125,7 @@ export class DocumentController {
         where: { id: documentId },
         include: {
           taxYear: {
-            select: { clientId: true }
+            select: { clientId: true, id: true }
           }
         }
       });
@@ -138,6 +138,9 @@ export class DocumentController {
         return res.status(403).json({ error: 'Unauthorized' });
       }
 
+      // Store taxYear id before deletion
+      const taxYearId = document.taxYear.id;
+
       // Delete from storage
       await StorageService.deleteDocument(document.fileUrl);
 
@@ -147,7 +150,7 @@ export class DocumentController {
       });
 
       // Re-validate after deletion
-      await ValidationService.autoValidate(document.taxYear.id);
+      await ValidationService.autoValidate(taxYearId);
 
       res.json({ message: 'Document deleted' });
     } catch (error: any) {

@@ -86,9 +86,10 @@ export class RulesEngineService {
       if (hasFederal && !hasProvincial) {
         // Get employer/payer name from federal slip
         const federalDoc = documents.find((d) => d.docType === rule.federal);
+        const extractedData = federalDoc?.extractedData as any;
         const entityName =
-          federalDoc?.extractedData?.employer_name ||
-          federalDoc?.extractedData?.payer_name ||
+          extractedData?.employer_name ||
+          extractedData?.payer_name ||
           'unknown employer';
 
         results.push({
@@ -219,9 +220,10 @@ export class RulesEngineService {
     for (const docType of missingRecurring) {
       // Get employer/payer from last year
       const prevDoc = previousYear.documents.find((d) => d.docType === docType);
+      const extractedData = prevDoc?.extractedData as any;
       const entityName =
-        prevDoc?.extractedData?.employer_name ||
-        prevDoc?.extractedData?.payer_name ||
+        extractedData?.employer_name ||
+        extractedData?.payer_name ||
         prevDoc?.docSubtype ||
         'previous employer';
 
