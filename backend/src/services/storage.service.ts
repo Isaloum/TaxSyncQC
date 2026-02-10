@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import sharp from 'sharp';
-import { fileTypeFromBuffer } from 'file-type';
+import { fromBuffer as fileTypeFromBuffer } from 'file-type';
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
