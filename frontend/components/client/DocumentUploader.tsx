@@ -66,8 +66,9 @@ export default function DocumentUploader({ year, onUploadComplete }: DocumentUpl
 
       {/* Document Type Selector */}
       <div className="mb-4">
-        <label className="block text-sm font-medium mb-2">Document Type</label>
+        <label htmlFor="docType" className="block text-sm font-medium mb-2">Document Type</label>
         <select
+          id="docType"
           value={docType}
           onChange={(e) => setDocType(e.target.value as DocType)}
           className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
@@ -81,10 +82,11 @@ export default function DocumentUploader({ year, onUploadComplete }: DocumentUpl
 
       {/* Optional: Employer/Payer Name */}
       <div className="mb-4">
-        <label className="block text-sm font-medium mb-2">
+        <label htmlFor="docSubtype" className="block text-sm font-medium mb-2">
           Employer/Payer Name (Optional)
         </label>
         <input
+          id="docSubtype"
           type="text"
           value={docSubtype}
           onChange={(e) => setDocSubtype(e.target.value)}
