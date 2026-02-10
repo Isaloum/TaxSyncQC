@@ -108,22 +108,27 @@ backend/
 ├── prisma/
 │   └── schema.prisma           # Database schema
 ├── scripts/
-│   └── test-api.js             # API test script
+│   ├── test-api.js             # API test script
+│   └── test-upload.js          # Document upload test script
 ├── src/
 │   ├── config/
 │   │   └── database.ts         # Prisma client configuration
 │   ├── controllers/
 │   │   ├── auth.controller.ts  # Authentication logic
 │   │   ├── accountant.controller.ts
-│   │   └── client.controller.ts
+│   │   ├── client.controller.ts
+│   │   └── document.controller.ts # Document management
 │   ├── middleware/
-│   │   └── auth.ts             # JWT authentication middleware
+│   │   ├── auth.ts             # JWT authentication middleware
+│   │   └── upload.ts           # File upload middleware
 │   ├── routes/
 │   │   ├── auth.routes.ts
 │   │   ├── accountant.routes.ts
-│   │   └── client.routes.ts
+│   │   ├── client.routes.ts
+│   │   └── document.routes.ts  # Document API routes
 │   ├── services/
-│   │   └── email.service.ts    # Email sending service
+│   │   ├── email.service.ts    # Email sending service
+│   │   └── storage.service.ts  # Supabase Storage service
 │   ├── types/
 │   │   └── express.d.ts        # TypeScript type definitions
 │   └── server.ts               # Main application entry point
@@ -318,6 +323,36 @@ Content-Type: application/json
 }
 ```
 
+#### Upload Document
+```http
+POST /api/client/tax-years/:year/documents
+Authorization: Bearer <token>
+Content-Type: multipart/form-data
+
+Form fields:
+- file: (binary) - PDF, JPG, PNG, or HEIC file (max 10MB)
+- docType: (string) - Document type (T4, RL1, T5, etc.)
+- docSubtype: (string, optional) - Employer/institution name
+```
+
+#### List Documents for Tax Year
+```http
+GET /api/client/tax-years/:year/documents
+Authorization: Bearer <token>
+```
+
+#### Delete Document
+```http
+DELETE /api/client/documents/:id
+Authorization: Bearer <token>
+```
+
+#### Get Document Download URL
+```http
+GET /api/client/documents/:id/download
+Authorization: Bearer <token>
+```
+
 ## 🔐 Security Features
 
 ### Password Hashing
@@ -472,6 +507,9 @@ When an accountant creates a client:
 | `EMAIL_FROM` | Sender email address | noreply@taxflowai.com |
 | `APP_NAME` | Application name | TaxFlowAI |
 | `LOGIN_URL` | Login page URL | http://localhost:3000/login |
+| `SUPABASE_URL` | Supabase project URL | - |
+| `SUPABASE_SERVICE_KEY` | Supabase service role key | - |
+| `SUPABASE_STORAGE_BUCKET` | Supabase storage bucket name | tax-documents |
 
 ## 📝 Testing the API
 
