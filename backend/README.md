@@ -1,11 +1,22 @@
 # TaxFlowAI Backend
 
+[![Deployment Status](https://github.com/Isaloum/TaxFlowAI/actions/workflows/backend-deploy.yml/badge.svg)](https://github.com/Isaloum/TaxFlowAI/actions/workflows/backend-deploy.yml)
+[![AWS Lambda](https://img.shields.io/badge/AWS-Lambda-orange?logo=amazon-aws)](https://aws.amazon.com/lambda/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue?logo=typescript)](https://www.typescriptlang.org/)
+
 Complete backend infrastructure for TaxFlowAI authentication, user onboarding, and document verification system.
 
 ## Phases
 
 - **Phase 1: Auth & Onboarding** ✅ - Complete authentication and user management
 - **Phase 2: Document Verification** 🔄 - Tax year tracking, document storage, OCR, validation rules
+
+## 📖 Documentation
+
+- **[Deployment Guide](../docs/DEPLOYMENT.md)** - Complete AWS Lambda deployment instructions
+- **[Environment Variables](../docs/ENVIRONMENT_VARIABLES.md)** - Configuration and credentials guide
+- **[Quick Start](QUICKSTART.md)** - Local development setup
+- **[API Documentation](#-api-endpoints)** - API endpoint reference
 
 ## 🚀 Quick Start
 
@@ -213,6 +224,81 @@ If you prefer manual setup:
    ```
 
    Server will run on `http://localhost:3001`
+
+## ☁️ AWS Lambda Deployment
+
+### Production Deployment
+
+Deploy to AWS Lambda using AWS SAM (Serverless Application Model):
+
+```bash
+# Build TypeScript
+npm run build
+
+# Build SAM application
+sam build
+
+# Deploy to AWS
+sam deploy
+```
+
+The backend is deployed as 4 serverless Lambda functions:
+- **AuthFunction** - Authentication and user management
+- **DocumentFunction** - Document upload and processing
+- **UserFunction** - User profile management
+- **NotificationFunction** - Email notifications via SES
+
+### Architecture
+
+```
+┌─────────────────┐
+│  API Gateway    │ ← CORS configured for frontend
+└────────┬────────┘
+         │
+    ┌────┴────┬──────────┬─────────────┐
+    │         │          │             │
+┌───▼───┐ ┌──▼──┐ ┌─────▼────┐ ┌─────▼──────┐
+│ Auth  │ │ Doc │ │   User   │ │ Notify     │
+│Lambda │ │Lambda│ │  Lambda  │ │  Lambda    │
+└───┬───┘ └──┬──┘ └─────┬────┘ └─────┬──────┘
+    │        │          │            │
+    └────────┴──────────┴────────────┘
+                  │
+         ┌────────▼────────┐
+         │   Supabase DB   │
+         │   + Storage     │
+         └─────────────────┘
+```
+
+### Quick Links
+
+- **[📚 Full Deployment Guide](../docs/DEPLOYMENT.md)** - Step-by-step AWS deployment
+- **[🔐 Environment Variables](../docs/ENVIRONMENT_VARIABLES.md)** - Credentials setup
+- **[🧪 Test Deployment](scripts/test-deployment.sh)** - Automated API testing
+
+### Automated Deployment
+
+GitHub Actions automatically deploys to AWS Lambda when changes are pushed to the `main` branch:
+
+1. Push code to `main` branch
+2. GitHub Actions workflow triggers
+3. Backend is built and tested
+4. Deployed to AWS Lambda via SAM
+5. API tests run automatically
+6. Deployment status posted to PR
+
+See `.github/workflows/backend-deploy.yml` for workflow details.
+
+### Cost Estimate
+
+AWS Free Tier includes:
+- 1M Lambda requests/month
+- 400,000 GB-seconds compute
+- 1M API Gateway calls/month (first year)
+
+**Expected cost:** $0-5/month for moderate usage
+
+See [Deployment Guide](../docs/DEPLOYMENT.md#cost-breakdown) for detailed cost analysis.
 
 ### Supabase Storage Setup
 
