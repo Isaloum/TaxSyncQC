@@ -92,9 +92,9 @@ jobs:
               elif line.strip() == '# DynamoDB Table for Users':
                   userstable_start = i
 
-          if userstable_start and userstable_start > outputs_start:
+          if userstable_start and outputs_start and userstable_start > outputs_start:
               userstable_section = lines[userstable_start:]
-              before_userstable = lines[:userstable_start-1]
+              before_userstable = lines[:userstable_start]
               new_lines = before_userstable[:outputs_start] + ['\n'] + userstable_section + ['\n'] + before_userstable[outputs_start:]
               
               with open('template.yaml', 'w') as f:
@@ -140,7 +140,12 @@ jobs:
           python3 fix-policy.py
           
           # Remove Metadata sections requiring Makefiles
-          sed -i '/Metadata:/,/BuildMethod: makefile/d' template.yaml || true
+          echo "Checking for Metadata sections..."
+          if grep -q "Metadata:" template.yaml; then
+            sed -i '/Metadata:/,/BuildMethod: makefile/d' template.yaml && echo "✅ Removed Metadata sections" || echo "⚠️  Could not remove Metadata sections"
+          else
+            echo "✅ No Metadata sections found"
+          fi
           
           echo "✅ Template fixes applied"
 
