@@ -46,12 +46,6 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - name: Verify AWS credentials
-        run: |
-          echo "✅ Verifying AWS credentials..."
-          aws sts get-caller-identity
-          echo "✅ AWS credentials verified!"
-
       - name: Install backend dependencies
         run: |
           cd backend
@@ -60,124 +54,17 @@ jobs:
       - name: Build TypeScript backend
         run: |
           cd backend
-          echo "🔨 Building TypeScript..."
           npm run build
-          echo "✅ TypeScript build complete!"
-
-      - name: Fix SAM template structure
-        run: |
-          cd backend
-          
-          # Create fix-structure.py
-          cat > fix-structure.py << 'PYEOF'
-          import os
-          
-          # Only run if template-production.yaml exists
-          if not os.path.exists('template-production.yaml'):
-              print("⚠️ template-production.yaml not found, skipping structure fix")
-              exit(0)
-          
-          with open('template-production.yaml', 'r') as f:
-              lines = f.readlines()
-
-          resources_start = None
-          outputs_start = None
-          userstable_start = None
-
-          for i, line in enumerate(lines):
-              if line.strip() == 'Resources:':
-                  resources_start = i
-              elif line.strip() == 'Outputs:':
-                  outputs_start = i
-              elif line.strip() == '# DynamoDB Table for Users':
-                  userstable_start = i
-
-          if userstable_start and userstable_start > outputs_start:
-              userstable_section = lines[userstable_start:]
-              before_userstable = lines[:userstable_start-1]
-              new_lines = before_userstable[:outputs_start] + ['\n'] + userstable_section + ['\n'] + before_userstable[outputs_start:]
-              
-              with open('template-production.yaml', 'w') as f:
-                  f.writelines(new_lines)
-              
-              print("✅ Moved UsersTable to Resources section")
-          else:
-              print("✅ UsersTable already in correct location")
-          PYEOF
-          
-          python3 fix-structure.py
-          
-          # Create fix-policy.py
-          cat > fix-policy.py << 'PYEOF'
-          import os
-          
-          if not os.path.exists('template-production.yaml'):
-              print("⚠️ template-production.yaml not found, skipping policy fix")
-              exit(0)
-          
-          with open('template-production.yaml', 'r') as f:
-              content = f.read()
-
-          old_policy = '''      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: !Ref UsersTable'''
-
-          new_policy = '''      Policies:
-        - Statement:
-            - Effect: Allow
-              Action:
-                - dynamodb:GetItem
-                - dynamodb:PutItem
-                - dynamodb:UpdateItem
-                - dynamodb:DeleteItem
-                - dynamodb:Query
-                - dynamodb:Scan
-              Resource: !GetAtt UsersTable.Arn'''
-
-          if old_policy in content:
-              content = content.replace(old_policy, new_policy)
-              with open('template-production.yaml', 'w') as f:
-                  f.write(content)
-              print("✅ Fixed DynamoDBCrudPolicy")
-          else:
-              print("✅ DynamoDBCrudPolicy already fixed or not present")
-          PYEOF
-          
-          python3 fix-policy.py
-          
-          # Remove Metadata sections requiring Makefiles
-          if [ -f "template-production.yaml" ]; then
-            sed -i '/Metadata:/,/BuildMethod: makefile/d' template-production.yaml 2>/dev/null || true
-          fi
-          
-          echo "✅ Template fixes applied"
 
       - name: Build SAM application
         run: |
           cd backend
-          echo "📦 Building SAM application..."
-          if [ -f "template-production.yaml" ]; then
-            sam build --template-file template-production.yaml
-          else
-            sam build
-          fi
-          echo "✅ SAM build complete!"
+          sam build --template-file template-production.yaml
 
       - name: Deploy to AWS Lambda
-        id: deploy
         run: |
           cd backend
-          echo "🚀 Deploying to AWS Lambda..."
-          sam deploy \
-            --template-file .aws-sam/build/template.yaml \
-            --stack-name taxflowai-backend \
-            --capabilities CAPABILITY_IAM \
-            --region us-east-1 \
-            --resolve-s3 \
-            --s3-prefix taxflowai-backend \
-            --no-confirm-changeset \
-            --no-fail-on-empty-changeset
-          echo "✅ Deployment complete!"
+          sam deploy --config-file samconfig.toml
 
       - name: Get API endpoint
         id: endpoint
@@ -189,66 +76,3 @@ jobs:
             --region us-east-1)
           echo "API_ENDPOINT=$API_ENDPOINT" >> $GITHUB_OUTPUT
           echo "🌐 API Endpoint: $API_ENDPOINT"
-
-      - name: Test API endpoints
-        id: test
-        run: |
-          cd backend
-          if [ -f "scripts/test-deployment.sh" ]; then
-            chmod +x scripts/test-deployment.sh
-            ./scripts/test-deployment.sh ${{ steps.endpoint.outputs.API_ENDPOINT }}
-          else
-            echo "⚠️ Test script not found, skipping tests"
-          fi
-        continue-on-error: true
-
-      - name: Post deployment status to PR
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const apiEndpoint = '${{ steps.endpoint.outputs.API_ENDPOINT }}';
-            const testStatus = '${{ steps.test.outcome }}';
-            const testIcon = testStatus === 'success' ? '✅' : '⚠️';
-            
-            const comment = `## 🚀 Backend Deployment Status
-            
-            **Deployment:** ✅ Successful
-            **API Endpoint:** \`${apiEndpoint}\`
-            **Tests:** ${testIcon} ${testStatus === 'success' ? 'Passed' : 'Failed (check logs)'}
-            
-            ### Deployed Functions
-            - ✅ AuthFunction
-            - ✅ DocumentFunction
-            - ✅ UserFunction
-            - ✅ NotificationFunction
-            
-            ### Next Steps
-            1. Update frontend \`NEXT_PUBLIC_API_URL\` with the API endpoint
-            2. Test authentication endpoints
-            3. Verify CORS configuration
-            
-            ---
-            _Deployment completed at ${new Date().toISOString()}_`;
-            
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment
-            });
-
-      - name: Summary
-        run: |
-          echo "## 🎉 Deployment Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ **Status:** Deployment successful" >> $GITHUB_STEP_SUMMARY
-          echo "🌐 **API Endpoint:** ${{ steps.endpoint.outputs.API_ENDPOINT }}" >> $GITHUB_STEP_SUMMARY
-          echo "🧪 **Tests:** ${{ steps.test.outcome }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Deployed Resources" >> $GITHUB_STEP_SUMMARY
-          echo "- AWS Lambda Functions (4)" >> $GITHUB_STEP_SUMMARY
-          echo "- API Gateway REST API" >> $GITHUB_STEP_SUMMARY
-          echo "- DynamoDB UsersTable" >> $GITHUB_STEP_SUMMARY
-          echo "- CloudWatch Log Groups" >> $GITHUB_STEP_SUMMARY
-          echo "- IAM Roles and Policies" >> $GITHUB_STEP_SUMMARY
