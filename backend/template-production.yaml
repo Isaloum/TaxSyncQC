@@ -85,7 +85,7 @@ Resources:
       Environment:
         Variables:
           USERS_TABLE: !Ref UsersTable
-          JWT_SECRET: !Sub '{{resolve:secretsmanager:taxflowai/jwt-secret:SecretString:secret}}'
+          JWT_SECRET: !Ref JwtSecret
           JWT_EXPIRES_IN: '24h'
       Policies:
         - Statement:
