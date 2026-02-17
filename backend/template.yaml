@@ -68,9 +68,6 @@ Resources:
       CodeUri: ./
       Handler: dist/lambda/documents.handler
       Description: Document upload, classification, and management
-      Policies:
-        - SESCrudPolicy:
-            IdentityName: notifications@isaloumapps.com
       Events:
         DocumentAPI:
           Type: Api
@@ -99,9 +96,6 @@ Resources:
       CodeUri: ./
       Handler: dist/lambda/notifications.handler
       Description: Email and notification service via SES
-      Policies:
-        - SESCrudPolicy:
-            IdentityName: notifications@isaloumapps.com
       Events:
         NotificationAPI:
           Type: Api
