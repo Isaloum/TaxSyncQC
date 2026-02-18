@@ -12,6 +12,8 @@ export default [
       'coverage/lcov-report/**',
       '.nyc_output/',
       'TaxFlowAI/',
+      'frontend/',
+      'backend/',
     ],
   },
   {
