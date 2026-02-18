@@ -13,7 +13,9 @@ Globals:
         SUPABASE_URL: !Ref SupabaseUrl
         SUPABASE_SERVICE_KEY: !Ref SupabaseServiceKey
         OPENAI_API_KEY: !Ref OpenAIKey
-        SES_EMAIL: notifications@isaloumapps.com
+        JWT_SECRET: !Ref JwtSecret
+        FRONTEND_URL: !Ref FrontendUrl
+        SES_EMAIL: !Ref SesEmail
         NODE_ENV: production
 
 Parameters:
@@ -32,10 +34,27 @@ Parameters:
     Type: String
     NoEcho: true
     Description: OpenAI API key for document classification
+  JwtSecret:
+    Type: String
+    NoEcho: true
+    Description: Secret key for signing JWT tokens
+  FrontendUrl:
+    Type: String
+    Default: "https://isaloumapps.com"
+    Description: Frontend URL used for CORS allow-origin header
+  SesEmail:
+    Type: String
+    Default: "notifications@isaloumapps.com"
+    Description: Sender email address for AWS SES notifications
   AllowedOrigin:
     Type: String
     Default: "'https://isaloumapps.com,https://www.isaloumapps.com'"
     Description: Allowed CORS origins (comma-separated)
+  Environment:
+    Type: String
+    Default: prod
+    AllowedValues: [dev, staging, prod]
+    Description: Deployment environment
 
 Resources:
   TaxFlowAPI:

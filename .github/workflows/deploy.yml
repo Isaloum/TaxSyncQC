@@ -165,7 +165,17 @@ jobs:
             --resolve-s3 \
             --s3-prefix taxflowai-backend \
             --no-confirm-changeset \
-            --no-fail-on-empty-changeset
+            --no-fail-on-empty-changeset \
+            --parameter-overrides \
+              Environment=prod \
+              DatabaseUrl="${{ secrets.DATABASE_URL }}" \
+              SupabaseUrl="${{ secrets.SUPABASE_URL }}" \
+              SupabaseServiceKey="${{ secrets.SUPABASE_SERVICE_KEY }}" \
+              OpenAIKey="${{ secrets.OPENAI_API_KEY }}" \
+              JwtSecret="${{ secrets.JWT_SECRET }}" \
+              FrontendUrl="${{ secrets.FRONTEND_URL }}" \
+              SesEmail="${{ secrets.SES_EMAIL }}" \
+              AllowedOrigin="${{ secrets.ALLOWED_ORIGIN }}"
 
       - name: Get API Endpoint
         id: get-endpoint
