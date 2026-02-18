@@ -63,11 +63,11 @@ jobs:
         run: |
           cd backend
           sam deploy \
-            --stack-name taxflowai-backend-production \
+            --stack-name taxflowai-backend \
             --capabilities CAPABILITY_IAM \
             --region us-east-1 \
             --resolve-s3 \
-            --s3-prefix taxflowai-backend-production \
+            --s3-prefix taxflowai-backend \
             --no-confirm-changeset \
             --no-fail-on-empty-changeset \
             --parameter-overrides \
@@ -83,7 +83,7 @@ jobs:
         id: endpoint
         run: |
           API_ENDPOINT=$(aws cloudformation describe-stacks \
-            --stack-name taxflowai-backend-production \
+            --stack-name taxflowai-backend \
             --query 'Stacks[0].Outputs[?OutputKey==`ApiEndpoint`].OutputValue' \
             --output text \
             --region us-east-1)
