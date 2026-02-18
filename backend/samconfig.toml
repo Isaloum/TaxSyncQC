@@ -8,12 +8,3 @@ region = "us-east-1"
 capabilities = "CAPABILITY_IAM"
 confirm_changeset = false
 fail_on_empty_changeset = false
-parameter_overrides = [
-    "Environment=prod",
-    "DatabaseUrl=placeholder",
-    "SupabaseUrl=https://placeholder.supabase.co",
-    "SupabaseServiceKey=placeholder",
-    "OpenAIKey=placeholder",
-    "JwtSecret=placeholder-jwt-secret-change-in-production",
-    "AllowedOrigin=*"
-]

@@ -77,8 +77,8 @@ Resources:
     Description: Authentication and user management - Updated Feb 13 2026
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: lambda-handlers/auth/
-      Handler: index.handler
+      CodeUri: ./
+      Handler: dist/lambda/auth.handler
       Runtime: nodejs18.x
       Timeout: 30
       MemorySize: 512
@@ -115,8 +115,8 @@ Resources:
   DocumentsFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: lambda-handlers/documents/
-      Handler: index.handler
+      CodeUri: ./
+      Handler: dist/lambda/documents.handler
       Events:
         DocumentsProxy:
           Type: Api
@@ -135,8 +135,8 @@ Resources:
   UsersFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: lambda-handlers/users/
-      Handler: index.handler
+      CodeUri: ./
+      Handler: dist/lambda/users.handler
       Events:
         UsersProxy:
           Type: Api
@@ -155,8 +155,8 @@ Resources:
   NotificationsFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: lambda-handlers/notifications/
-      Handler: index.handler
+      CodeUri: ./
+      Handler: dist/lambda/notifications.handler
       Events:
         NotificationsProxy:
           Type: Api
