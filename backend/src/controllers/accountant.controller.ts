@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import argon2 from 'argon2';
+import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import archiver from 'archiver';
 import axios from 'axios';
@@ -41,7 +41,7 @@ export const createClient = async (req: Request, res: Response) => {
     }
 
     const temporaryPassword = generateTemporaryPassword();
-    const passwordHash = await argon2.hash(temporaryPassword);
+    const passwordHash = await bcrypt.hash(temporaryPassword, 12);
 
     const client = await prisma.client.create({
       data: {
