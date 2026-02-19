@@ -283,6 +283,47 @@ Resources:
       LogGroupName: !Sub /aws/lambda/${NotificationsFunction}
       RetentionInDays: 7
 
+  # Health Check Lambda
+  HealthFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./
+      Handler: src/lambda/health.handler
+      Events:
+        HealthProxy:
+          Type: Api
+          Properties:
+            RestApiId: !Ref TaxFlowAPI
+            Path: /health/{proxy+}
+            Method: ANY
+        HealthRoot:
+          Type: Api
+          Properties:
+            RestApiId: !Ref TaxFlowAPI
+            Path: /health
+            Method: ANY
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: false
+        Target: 'es2020'
+        Sourcemap: false
+        EntryPoints:
+          - src/lambda/health.ts
+        External:
+          - sharp
+          - '@mapbox/node-pre-gyp'
+          - mock-aws-s3
+          - aws-sdk
+          - nock
+          - tesseract.js
+          - '@google-cloud/vision'
+
+  HealthFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${HealthFunction}
+      RetentionInDays: 7
 
   # DynamoDB Table for Users
 Outputs:
@@ -307,3 +348,7 @@ Outputs:
   NotificationsFunctionArn:
     Description: Notifications Lambda ARN
     Value: !GetAtt NotificationsFunction.Arn
+
+  HealthFunctionArn:
+    Description: Health Lambda ARN
+    Value: !GetAtt HealthFunction.Arn

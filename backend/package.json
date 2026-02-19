@@ -3,12 +3,17 @@
   "version": "1.0.0",
   "description": "TaxFlowAI Backend - AI-Powered Tax Management Platform - Phase 1: Auth & Onboarding",
   "main": "src/server.ts",
+  "prisma": {
+    "seed": "ts-node-dev prisma/seed.ts"
+  },
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
     "setup": "chmod +x setup.sh && ./setup.sh",
     "db:push": "prisma db push",
+    "db:seed": "npx prisma db seed",
+    "db:migrate": "npx prisma migrate deploy",
     "db:studio": "prisma studio",
     "test:api": "node scripts/test-api.js",
     "prisma:generate": "prisma generate",

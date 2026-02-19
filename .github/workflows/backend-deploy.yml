@@ -64,6 +64,12 @@ jobs:
           cd backend
           sam build --template-file template-production.yaml
 
+      - name: Generate Prisma Client
+        working-directory: backend
+        run: |
+          npm install @prisma/client
+          npx prisma generate
+
       - name: Deploy to AWS Lambda
         run: |
           cd backend
