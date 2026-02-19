@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import argon2 from 'argon2';
+import bcrypt from 'bcryptjs';
 import jwt, { SignOptions } from 'jsonwebtoken';
 import { z } from 'zod';
 import prisma from '../config/database';
@@ -41,7 +41,7 @@ export const registerAccountant = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Email already registered' });
     }
 
-    const passwordHash = await argon2.hash(validatedData.password);
+    const passwordHash = await bcrypt.hash(validatedData.password, 12);
 
     const accountant = await prisma.accountant.create({
       data: {
@@ -94,7 +94,7 @@ export const login = async (req: Request, res: Response) => {
     });
 
     if (accountant) {
-      const isValidPassword = await argon2.verify(accountant.passwordHash, validatedData.password);
+      const isValidPassword = await bcrypt.compare(accountant.passwordHash, validatedData.password);
 
       if (isValidPassword) {
         const signOptions: SignOptions = { expiresIn: JWT_EXPIRES_IN as any };
@@ -128,7 +128,7 @@ export const login = async (req: Request, res: Response) => {
     });
 
     if (client) {
-      const isValidPassword = await argon2.verify(client.passwordHash, validatedData.password);
+      const isValidPassword = await bcrypt.compare(client.passwordHash, validatedData.password);
 
       if (isValidPassword) {
         const signOptions: SignOptions = { expiresIn: JWT_EXPIRES_IN as any };
@@ -187,13 +187,13 @@ export const changePassword = async (req: Request, res: Response) => {
         return res.status(404).json({ error: 'Accountant not found' });
       }
 
-      const isValidPassword = await argon2.verify(accountant.passwordHash, validatedData.currentPassword);
+      const isValidPassword = await bcrypt.compare(accountant.passwordHash, validatedData.currentPassword);
 
       if (!isValidPassword) {
         return res.status(401).json({ error: 'Current password is incorrect' });
       }
 
-      const newPasswordHash = await argon2.hash(validatedData.newPassword);
+      const newPasswordHash = await bcrypt.hash(validatedData.newPassword, 12);
 
       await prisma.accountant.update({
         where: { id: req.user.sub },
@@ -208,13 +208,13 @@ export const changePassword = async (req: Request, res: Response) => {
         return res.status(404).json({ error: 'Client not found' });
       }
 
-      const isValidPassword = await argon2.verify(client.passwordHash, validatedData.currentPassword);
+      const isValidPassword = await bcrypt.compare(client.passwordHash, validatedData.currentPassword);
 
       if (!isValidPassword) {
         return res.status(401).json({ error: 'Current password is incorrect' });
       }
 
-      const newPasswordHash = await argon2.hash(validatedData.newPassword);
+      const newPasswordHash = await bcrypt.hash(validatedData.newPassword, 12);
 
       await prisma.client.update({
         where: { id: req.user.sub },

@@ -142,7 +142,6 @@ Resources:
         EntryPoints:
           - src/lambda/auth.ts
         External:
-          - argon2
           - sharp
           - '@mapbox/node-pre-gyp'
           - mock-aws-s3
@@ -179,7 +178,6 @@ Resources:
         EntryPoints:
           - src/lambda/documents.ts
         External:
-          - argon2
           - sharp
           - '@mapbox/node-pre-gyp'
           - mock-aws-s3
@@ -216,7 +214,6 @@ Resources:
         EntryPoints:
           - src/lambda/users.ts
         External:
-          - argon2
           - sharp
           - '@mapbox/node-pre-gyp'
           - mock-aws-s3
@@ -253,7 +250,6 @@ Resources:
         EntryPoints:
           - src/lambda/notifications.ts
         External:
-          - argon2
           - sharp
           - '@mapbox/node-pre-gyp'
           - mock-aws-s3
