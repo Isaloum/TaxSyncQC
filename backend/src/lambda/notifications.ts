@@ -1,9 +1,11 @@
 import serverless from 'serverless-http';
 import express from 'express';
+import cors from 'cors';
 import { Router } from 'express';
 import { SESEmailService } from '../services/ses-email.service';
 
 const app = express();
+app.use(cors({ origin: '*' }));
 app.use(express.json());
 
 const router = Router();

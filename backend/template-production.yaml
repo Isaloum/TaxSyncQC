@@ -89,10 +89,6 @@ Resources:
     Type: AWS::Serverless::Api
     Properties:
       StageName: !Ref Environment
-      Cors:
-        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
-        AllowHeaders: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
-        AllowOrigin: !Sub "'${AllowedOrigin}'"
 
   # Auth Lambda
   AuthFunction:
