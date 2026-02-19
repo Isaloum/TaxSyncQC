@@ -8,8 +8,10 @@ async function main() {
 
   try {
     // Create default test accountant user
-    const testAccountantEmail = 'ihab@taxflowai.com';
-    const testPassword = 'TaxFlow2024!';
+    // NOTE: These credentials are for development/testing ONLY
+    // In production, use environment variables for sensitive data
+    const testAccountantEmail = process.env.TEST_ACCOUNT_EMAIL || 'ihab@taxflowai.com';
+    const testPassword = process.env.TEST_ACCOUNT_PASSWORD || 'TaxFlow2024!';
     
     console.log(`Creating/updating test accountant: ${testAccountantEmail}`);
     

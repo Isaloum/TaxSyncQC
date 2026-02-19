@@ -4,6 +4,8 @@ import cors from 'cors';
 import prisma from '../config/database';
 
 const app = express();
+// CORS: Using wildcard for health checks as they contain non-sensitive status information
+// For production APIs with sensitive data, restrict to specific origins
 app.use(cors({ origin: '*' }));
 app.use(express.json());
 
@@ -18,13 +20,19 @@ app.get('/health/db', async (req: Request, res: Response) => {
     // Get database connection info (without sensitive data)
     const result = await prisma.$queryRaw<[{ version: string }]>`SELECT version()`;
     const dbVersion = result[0]?.version || 'Unknown';
+    
+    // Extract PostgreSQL version safely
+    const versionParts = dbVersion.split(' ');
+    const safeVersion = versionParts.length >= 2 
+      ? versionParts.slice(0, 2).join(' ')
+      : dbVersion;
 
     res.status(200).json({
       status: 'healthy',
       database: {
         connected: true,
         responseTime: `${responseTime}ms`,
-        version: dbVersion.split(' ').slice(0, 2).join(' '), // PostgreSQL version only
+        version: safeVersion,
       },
       timestamp: new Date().toISOString(),
     });

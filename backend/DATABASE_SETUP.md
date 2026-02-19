@@ -86,13 +86,23 @@ Create the default test accountant user and other seed data:
 npm run db:seed
 ```
 
-This will create:
+⚠️ **IMPORTANT - DEVELOPMENT/TESTING ONLY**
+
+The seed script creates test users with default credentials:
 - **Test Accountant User**
   - Email: `ihab@taxflowai.com`
   - Password: `TaxFlow2024!`
   - Firm Name: TaxFlowAI
   - Phone: +1-514-555-1234
   - Language: English
+
+**These credentials are for development and testing purposes ONLY.**
+**NEVER use these default credentials in production environments.**
+
+You can override the default credentials using environment variables:
+```bash
+TEST_ACCOUNT_EMAIL="your@email.com" TEST_ACCOUNT_PASSWORD="YourPassword" npm run db:seed
+```
 
 The seed script is **idempotent** - it can be run multiple times safely without creating duplicates.
 
