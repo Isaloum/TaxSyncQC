@@ -3,6 +3,9 @@ import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
+// Bcrypt configuration
+const BCRYPT_SALT_ROUNDS = 12;
+
 async function main() {
   console.log('🌱 Starting database seeding...');
 
@@ -16,7 +19,7 @@ async function main() {
     console.log(`Creating/updating test accountant: ${testAccountantEmail}`);
     
     // Hash the password
-    const passwordHash = await bcrypt.hash(testPassword, 12);
+    const passwordHash = await bcrypt.hash(testPassword, BCRYPT_SALT_ROUNDS);
     
     // Use upsert to avoid duplicates
     const accountant = await prisma.accountant.upsert({

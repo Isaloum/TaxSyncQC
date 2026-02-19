@@ -18,7 +18,13 @@ app.get('/health/db', async (req: Request, res: Response) => {
     const responseTime = Date.now() - startTime;
 
     // Get database connection info (without sensitive data)
-    const result = await prisma.$queryRaw<[{ version: string }]>`SELECT version()`;
+    const result = await prisma.$queryRaw<{ version: string }[]>`SELECT version()`;
+    
+    // Safely extract version info
+    if (!result || result.length === 0) {
+      throw new Error('No version information returned from database');
+    }
+    
     const dbVersion = result[0]?.version || 'Unknown';
     
     // Extract PostgreSQL version safely
