@@ -54,11 +54,10 @@ jobs:
           cd backend
           npm ci
 
-      - name: Generate Prisma client and push schema
+      - name: Generate Prisma client
         run: |
           cd backend
-          DATABASE_URL="${{ secrets.DATABASE_URL }}" DIRECT_URL="${{ secrets.DATABASE_URL }}" npx prisma generate
-          DATABASE_URL="${{ secrets.DATABASE_URL }}" DIRECT_URL="${{ secrets.DATABASE_URL }}" npx prisma db push --accept-data-loss
+          npx prisma generate
 
       - name: Build SAM application
         run: |
