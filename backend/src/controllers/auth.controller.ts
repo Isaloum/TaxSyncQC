@@ -94,7 +94,7 @@ export const login = async (req: Request, res: Response) => {
     });
 
     if (accountant) {
-      const isValidPassword = await bcrypt.compare(accountant.passwordHash, validatedData.password);
+      const isValidPassword = await bcrypt.compare(validatedData.password, accountant.passwordHash);
 
       if (isValidPassword) {
         const signOptions: SignOptions = { expiresIn: JWT_EXPIRES_IN as any };
@@ -128,7 +128,7 @@ export const login = async (req: Request, res: Response) => {
     });
 
     if (client) {
-      const isValidPassword = await bcrypt.compare(client.passwordHash, validatedData.password);
+      const isValidPassword = await bcrypt.compare(validatedData.password, client.passwordHash);
 
       if (isValidPassword) {
         const signOptions: SignOptions = { expiresIn: JWT_EXPIRES_IN as any };
@@ -187,7 +187,7 @@ export const changePassword = async (req: Request, res: Response) => {
         return res.status(404).json({ error: 'Accountant not found' });
       }
 
-      const isValidPassword = await bcrypt.compare(accountant.passwordHash, validatedData.currentPassword);
+      const isValidPassword = await bcrypt.compare(validatedData.currentPassword, accountant.passwordHash);
 
       if (!isValidPassword) {
         return res.status(401).json({ error: 'Current password is incorrect' });
@@ -208,7 +208,7 @@ export const changePassword = async (req: Request, res: Response) => {
         return res.status(404).json({ error: 'Client not found' });
       }
 
-      const isValidPassword = await bcrypt.compare(client.passwordHash, validatedData.currentPassword);
+      const isValidPassword = await bcrypt.compare(validatedData.currentPassword, client.passwordHash);
 
       if (!isValidPassword) {
         return res.status(401).json({ error: 'Current password is incorrect' });
