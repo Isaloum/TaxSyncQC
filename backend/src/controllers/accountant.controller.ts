@@ -24,7 +24,7 @@ export const createClient = async (req: Request, res: Response) => {
 
     const validatedData = createClientSchema.parse(req.body);
 
-    const existingClient = await prisma.client.findUnique({
+    const existingClient = await prisma.client.findFirst({
       where: { email: validatedData.email },
     });
 
