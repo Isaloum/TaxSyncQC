@@ -59,4 +59,4 @@ router.post('/document-processed', async (req, res) => {
 
 app.use('/notifications', router);
 
-export const handler = serverless(app, { binary: ['*/*'] });
+export const handler = serverless(app);
