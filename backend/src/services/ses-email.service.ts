@@ -1,6 +1,17 @@
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
+import crypto from 'crypto';
 
 const sesClient = new SESClient({ region: process.env.AWS_REGION || 'us-east-1' });
+
+export const generateTemporaryPassword = (): string => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+  let password = '';
+  for (let i = 0; i < 12; i++) {
+    const randomIndex = crypto.randomInt(0, chars.length);
+    password += chars.charAt(randomIndex);
+  }
+  return password;
+};
 
 export class SESEmailService {
   /**
@@ -148,6 +159,74 @@ export class SESEmailService {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error(`Failed to send document processed email to ${to} for document ${documentName}:`, errorMessage, error);
       throw new Error(`Failed to send document processed email to ${to} for document "${documentName}": ${errorMessage}`);
+    }
+  }
+
+  static async sendClientInvitationEmail(
+    clientEmail: string,
+    clientName: string,
+    temporaryPassword: string,
+    accountantFirmName: string,
+    languagePref: string
+  ): Promise<void> {
+    const loginUrl = process.env.LOGIN_URL || 'https://www.isaloumapps.com/login';
+    const appName = 'TaxFlowAI';
+    const FROM = process.env.SES_EMAIL || 'notifications@isaloumapps.com';
+
+    const frenchBody = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #2563eb;">Bienvenue sur ${appName}!</h2>
+        <p>Bonjour ${clientName},</p>
+        <p>Votre comptable de <strong>${accountantFirmName}</strong> vous a créé un compte.</p>
+        <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="margin-top: 0;">Vos informations de connexion:</h3>
+          <p><strong>Email:</strong> ${clientEmail}</p>
+          <p><strong>Mot de passe temporaire:</strong> <code style="background:#e5e7eb;padding:2px 6px;border-radius:4px;">${temporaryPassword}</code></p>
+        </div>
+        <p><strong>⚠️ Important:</strong> Vous devrez changer ce mot de passe lors de votre première connexion.</p>
+        <p><a href="${loginUrl}" style="background-color:#2563eb;color:white;padding:12px 24px;text-decoration:none;border-radius:6px;display:inline-block;">Se connecter maintenant</a></p>
+      </div>
+    `;
+
+    const englishBody = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #2563eb;">Welcome to ${appName}!</h2>
+        <p>Hello ${clientName},</p>
+        <p>Your accountant from <strong>${accountantFirmName}</strong> has created an account for you.</p>
+        <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="margin-top: 0;">Your login credentials:</h3>
+          <p><strong>Email:</strong> ${clientEmail}</p>
+          <p><strong>Temporary password:</strong> <code style="background:#e5e7eb;padding:2px 6px;border-radius:4px;">${temporaryPassword}</code></p>
+        </div>
+        <p><strong>⚠️ Important:</strong> You will need to change this password on your first login.</p>
+        <p><a href="${loginUrl}" style="background-color:#2563eb;color:white;padding:12px 24px;text-decoration:none;border-radius:6px;display:inline-block;">Login now</a></p>
+      </div>
+    `;
+
+    const subject = languagePref === 'fr'
+      ? `Bienvenue sur ${appName} - Votre compte a été créé`
+      : `Welcome to ${appName} - Your account has been created`;
+
+    const htmlBody = languagePref === 'fr'
+      ? `${frenchBody}<hr style="margin:40px 0;border:none;border-top:1px solid #e5e7eb;">${englishBody}`
+      : `${englishBody}<hr style="margin:40px 0;border:none;border-top:1px solid #e5e7eb;">${frenchBody}`;
+
+    const command = new SendEmailCommand({
+      Source: FROM,
+      Destination: { ToAddresses: [clientEmail] },
+      Message: {
+        Subject: { Data: subject, Charset: 'UTF-8' },
+        Body: { Html: { Data: htmlBody, Charset: 'UTF-8' } },
+      },
+    });
+
+    try {
+      await sesClient.send(command);
+      console.log(`Invitation email sent to ${clientEmail}`);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`Failed to send invitation email to ${clientEmail}:`, msg);
+      throw new Error(`Failed to send invitation email: ${msg}`);
     }
   }
 

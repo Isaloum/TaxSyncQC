@@ -4,7 +4,7 @@ import { z } from 'zod';
 import archiver from 'archiver';
 import axios from 'axios';
 import prisma from '../config/database';
-import { generateTemporaryPassword, sendClientInvitationEmail } from '../services/email.service';
+import { generateTemporaryPassword, SESEmailService } from '../services/ses-email.service';
 import { NotificationService } from '../services/notifications/notification.service';
 
 const createClientSchema = z.object({
@@ -12,7 +12,7 @@ const createClientSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
   province: z.string().min(1, 'Province is required'),
-  phone: z.string().min(1, 'Phone is required'),
+  phone: z.string().optional(),
   languagePref: z.enum(['fr', 'en']).default('fr'),
 });
 
@@ -58,7 +58,7 @@ export const createClient = async (req: Request, res: Response) => {
     });
 
     try {
-      await sendClientInvitationEmail(
+      await SESEmailService.sendClientInvitationEmail(
         client.email,
         `${client.firstName} ${client.lastName}`,
         temporaryPassword,
