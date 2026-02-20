@@ -9,5 +9,5 @@ app.use(cors({ origin: '*' }));
 app.use(express.json());
 app.use('/auth', authRoutes);
 
-export const handler = serverless(app);
+export const handler = serverless(app, { binary: ['*/*'] });
 

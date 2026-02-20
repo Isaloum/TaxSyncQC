@@ -11,4 +11,4 @@ app.use(express.json());
 app.use('/users/client', clientRoutes);
 app.use('/users/accountant', accountantRoutes);
 
-export const handler = serverless(app);
+export const handler = serverless(app, { binary: ['*/*'] });
