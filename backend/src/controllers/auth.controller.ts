@@ -123,7 +123,7 @@ export const login = async (req: Request, res: Response) => {
       }
     }
 
-    const client = await prisma.client.findUnique({
+    const client = await prisma.client.findFirst({
       where: { email: validatedData.email },
     });
 

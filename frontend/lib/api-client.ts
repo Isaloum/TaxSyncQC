@@ -57,7 +57,7 @@ export class APIClient {
   }
 
   static async getAccountantClients() {
-    return api.get('/users/accountant/clients');
+    return api.get('/users/accountant/clients-with-tax-years');
   }
 
   static async getClientById(clientId: string) {

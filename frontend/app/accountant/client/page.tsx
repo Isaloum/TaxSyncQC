@@ -29,7 +29,7 @@ function ClientDetail() {
         APIClient.getClientTaxYears(clientId),
       ]);
       setClient(clientRes.data.client);
-      const years = yearsRes.data.taxYears || [];
+      const years = yearsRes.data.client?.taxYears || [];
       setTaxYears(years);
       if (years.length > 0) await loadYearDetails(years[0]);
     } catch (err) {
@@ -148,16 +148,16 @@ function ClientDetail() {
                     {yearDetails.documents?.map((doc: any) => (
                       <div key={doc.id} className="px-4 py-3 flex items-center justify-between">
                         <div>
-                          <p className="font-medium text-sm">{doc.originalName || doc.fileName}</p>
-                          <p className="text-xs text-gray-400">{doc.documentType} · {doc.fileSize ? `${(doc.fileSize / 1024).toFixed(0)} KB` : ''}</p>
+                          <p className="font-medium text-sm">{doc.originalFilename || doc.docType}</p>
+                          <p className="text-xs text-gray-400">{doc.docType} · {doc.fileSizeBytes ? `${(doc.fileSizeBytes / 1024).toFixed(0)} KB` : ''}</p>
                         </div>
                         <div className="flex items-center gap-2">
                           <span className={`px-2 py-0.5 rounded text-xs ${
-                            doc.status === 'approved' ? 'bg-green-100 text-green-700' :
-                            doc.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                            doc.reviewStatus === 'approved' ? 'bg-green-100 text-green-700' :
+                            doc.reviewStatus === 'rejected' ? 'bg-red-100 text-red-700' :
                             'bg-yellow-100 text-yellow-700'
-                          }`}>{doc.status}</span>
-                          {doc.status === 'pending' && (
+                          }`}>{doc.reviewStatus}</span>
+                          {doc.reviewStatus === 'pending' && (
                             <>
                               <button disabled={!!actionLoading} onClick={() => handleApprove(doc.id)}
                                 className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 disabled:opacity-50">
