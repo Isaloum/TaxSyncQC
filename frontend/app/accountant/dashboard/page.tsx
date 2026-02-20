@@ -122,7 +122,7 @@ export default function AccountantDashboard() {
                 </tr>
               )}
               {clients.map((client) => (
-                <tr key={client.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => router.push(`/accountant/client/${client.id}`)}>
+                <tr key={client.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => router.push(`/accountant/client?id=${client.id}`)}>
                   <td className="px-6 py-4">{client.name}</td>
                   <td className="px-6 py-4 text-gray-600">{client.email}</td>
                   <td className="px-6 py-4">{client.latestYear || '-'}</td>

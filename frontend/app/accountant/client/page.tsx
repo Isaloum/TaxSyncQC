@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useEffect, useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { APIClient } from '@/lib/api-client';
 
-export default function ClientDetailPage() {
+function ClientDetail() {
   const router = useRouter();
-  const params = useParams();
-  const clientId = params.clientId as string;
+  const searchParams = useSearchParams();
+  const clientId = searchParams.get('id') || '';
 
   const [client, setClient] = useState<any>(null);
   const [taxYears, setTaxYears] = useState<any[]>([]);
@@ -19,7 +19,7 @@ export default function ClientDetailPage() {
   const [actionLoading, setActionLoading] = useState('');
 
   useEffect(() => {
-    loadAll();
+    if (clientId) loadAll();
   }, [clientId]);
 
   const loadAll = async () => {
@@ -31,10 +31,7 @@ export default function ClientDetailPage() {
       setClient(clientRes.data.client);
       const years = yearsRes.data.taxYears || [];
       setTaxYears(years);
-      // Auto-select the most recent tax year
-      if (years.length > 0) {
-        await loadYearDetails(years[0]);
-      }
+      if (years.length > 0) await loadYearDetails(years[0]);
     } catch (err) {
       console.error(err);
     } finally {
@@ -80,6 +77,7 @@ export default function ClientDetailPage() {
     }
   };
 
+  if (!clientId) return <div className="p-6">No client selected.</div>;
   if (loading) return <div className="p-6">Loading...</div>;
 
   return (
@@ -96,102 +94,55 @@ export default function ClientDetailPage() {
       </nav>
 
       <div className="container mx-auto px-6">
-        {/* Client Info */}
         {client && (
-          <div className="bg-white rounded-lg shadow p-4 mb-6 flex gap-8">
-            <div>
-              <p className="text-xs text-gray-500">Email</p>
-              <p className="font-medium">{client.email}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">Province</p>
-              <p className="font-medium">{client.province}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">Phone</p>
-              <p className="font-medium">{client.phone || '—'}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">Language</p>
-              <p className="font-medium">{client.languagePref === 'fr' ? 'Français' : 'English'}</p>
-            </div>
+          <div className="bg-white rounded-lg shadow p-4 mb-6 flex gap-8 flex-wrap">
+            <div><p className="text-xs text-gray-500">Email</p><p className="font-medium">{client.email}</p></div>
+            <div><p className="text-xs text-gray-500">Province</p><p className="font-medium">{client.province}</p></div>
+            <div><p className="text-xs text-gray-500">Phone</p><p className="font-medium">{client.phone || '—'}</p></div>
+            <div><p className="text-xs text-gray-500">Language</p><p className="font-medium">{client.languagePref === 'fr' ? 'Français' : 'English'}</p></div>
           </div>
         )}
 
         <div className="flex gap-6">
-          {/* Tax Year List */}
           <div className="w-48 flex-shrink-0">
             <h2 className="text-sm font-semibold text-gray-500 mb-2">TAX YEARS</h2>
             <div className="space-y-1">
-              {taxYears.length === 0 && (
-                <p className="text-sm text-gray-400">No tax years yet.</p>
-              )}
+              {taxYears.length === 0 && <p className="text-sm text-gray-400">No tax years yet.</p>}
               {taxYears.map((year) => (
-                <button
-                  key={year.id}
-                  onClick={() => loadYearDetails(year)}
+                <button key={year.id} onClick={() => loadYearDetails(year)}
                   className={`w-full text-left px-3 py-2 rounded-lg text-sm ${
-                    selectedYear?.id === year.id
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white hover:bg-gray-50 border'
-                  }`}
-                >
+                    selectedYear?.id === year.id ? 'bg-blue-600 text-white' : 'bg-white hover:bg-gray-50 border'
+                  }`}>
                   <div className="font-medium">{year.year}</div>
-                  <div className={`text-xs ${selectedYear?.id === year.id ? 'text-blue-100' : 'text-gray-400'}`}>
-                    {year.status}
-                  </div>
+                  <div className={`text-xs ${selectedYear?.id === year.id ? 'text-blue-100' : 'text-gray-400'}`}>{year.status}</div>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Tax Year Details */}
           <div className="flex-1">
-            {!selectedYear && (
-              <div className="bg-white rounded-lg shadow p-8 text-center text-gray-400">
-                Select a tax year
-              </div>
-            )}
-
-            {selectedYear && !yearDetails && (
-              <div className="bg-white rounded-lg shadow p-8 text-center text-gray-400">
-                Loading...
-              </div>
-            )}
+            {!selectedYear && <div className="bg-white rounded-lg shadow p-8 text-center text-gray-400">Select a tax year</div>}
+            {selectedYear && !yearDetails && <div className="bg-white rounded-lg shadow p-8 text-center text-gray-400">Loading...</div>}
 
             {yearDetails && (
               <div className="space-y-4">
-                {/* Summary */}
-                <div className="bg-white rounded-lg shadow p-4 flex gap-6">
+                <div className="bg-white rounded-lg shadow p-4 flex gap-6 flex-wrap">
                   <div>
                     <p className="text-xs text-gray-500">Status</p>
                     <span className={`px-2 py-1 rounded text-sm ${
                       yearDetails.taxYear?.status === 'submitted' ? 'bg-yellow-100 text-yellow-800' :
                       yearDetails.taxYear?.status === 'completed' ? 'bg-green-100 text-green-800' :
                       'bg-gray-100 text-gray-800'
-                    }`}>
-                      {yearDetails.taxYear?.status || 'draft'}
-                    </span>
+                    }`}>{yearDetails.taxYear?.status || 'draft'}</span>
                   </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Completeness</p>
-                    <p className="font-medium">{yearDetails.taxYear?.completenessScore ?? 0}%</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Documents</p>
-                    <p className="font-medium">{yearDetails.documents?.length || 0} uploaded</p>
-                  </div>
+                  <div><p className="text-xs text-gray-500">Completeness</p><p className="font-medium">{yearDetails.taxYear?.completenessScore ?? 0}%</p></div>
+                  <div><p className="text-xs text-gray-500">Documents</p><p className="font-medium">{yearDetails.documents?.length || 0} uploaded</p></div>
                 </div>
 
-                {/* Documents */}
                 <div className="bg-white rounded-lg shadow overflow-hidden">
-                  <div className="px-4 py-3 border-b">
-                    <h3 className="font-semibold">Documents</h3>
-                  </div>
+                  <div className="px-4 py-3 border-b"><h3 className="font-semibold">Documents</h3></div>
                   {(!yearDetails.documents || yearDetails.documents.length === 0) && (
-                    <p className="px-4 py-8 text-center text-gray-400 text-sm">
-                      No documents uploaded yet.
-                    </p>
+                    <p className="px-4 py-8 text-center text-gray-400 text-sm">No documents uploaded yet.</p>
                   )}
                   <div className="divide-y">
                     {yearDetails.documents?.map((doc: any) => (
@@ -205,23 +156,15 @@ export default function ClientDetailPage() {
                             doc.status === 'approved' ? 'bg-green-100 text-green-700' :
                             doc.status === 'rejected' ? 'bg-red-100 text-red-700' :
                             'bg-yellow-100 text-yellow-700'
-                          }`}>
-                            {doc.status}
-                          </span>
+                          }`}>{doc.status}</span>
                           {doc.status === 'pending' && (
                             <>
-                              <button
-                                disabled={!!actionLoading}
-                                onClick={() => handleApprove(doc.id)}
-                                className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 disabled:opacity-50"
-                              >
+                              <button disabled={!!actionLoading} onClick={() => handleApprove(doc.id)}
+                                className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 disabled:opacity-50">
                                 {actionLoading === doc.id ? '...' : 'Approve'}
                               </button>
-                              <button
-                                disabled={!!actionLoading}
-                                onClick={() => setRejectDocId(doc.id)}
-                                className="px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 disabled:opacity-50"
-                              >
+                              <button disabled={!!actionLoading} onClick={() => setRejectDocId(doc.id)}
+                                className="px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 disabled:opacity-50">
                                 Reject
                               </button>
                             </>
@@ -232,12 +175,9 @@ export default function ClientDetailPage() {
                   </div>
                 </div>
 
-                {/* Validations */}
                 {yearDetails.validations && yearDetails.validations.length > 0 && (
                   <div className="bg-white rounded-lg shadow overflow-hidden">
-                    <div className="px-4 py-3 border-b">
-                      <h3 className="font-semibold">Validation Checks</h3>
-                    </div>
+                    <div className="px-4 py-3 border-b"><h3 className="font-semibold">Validation Checks</h3></div>
                     <div className="divide-y">
                       {yearDetails.validations.map((v: any) => (
                         <div key={v.id} className="px-4 py-3 flex items-center justify-between">
@@ -246,9 +186,7 @@ export default function ClientDetailPage() {
                             v.status === 'passed' ? 'bg-green-100 text-green-700' :
                             v.status === 'failed' ? 'bg-red-100 text-red-700' :
                             'bg-gray-100 text-gray-700'
-                          }`}>
-                            {v.status}
-                          </span>
+                          }`}>{v.status}</span>
                         </div>
                       ))}
                     </div>
@@ -260,29 +198,17 @@ export default function ClientDetailPage() {
         </div>
       </div>
 
-      {/* Reject Modal */}
       {rejectDocId && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6">
             <h3 className="font-bold mb-3">Reject Document</h3>
-            <textarea
-              value={rejectReason}
-              onChange={e => setRejectReason(e.target.value)}
-              placeholder="Reason for rejection..."
-              className="w-full border rounded-lg px-3 py-2 text-sm h-24 resize-none mb-4"
-            />
+            <textarea value={rejectReason} onChange={e => setRejectReason(e.target.value)}
+              placeholder="Reason for rejection..." className="w-full border rounded-lg px-3 py-2 text-sm h-24 resize-none mb-4" />
             <div className="flex gap-3">
-              <button
-                onClick={() => { setRejectDocId(null); setRejectReason(''); }}
-                className="flex-1 border rounded-lg py-2 text-sm hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                disabled={!rejectReason.trim() || !!actionLoading}
-                onClick={handleReject}
-                className="flex-1 bg-red-600 text-white rounded-lg py-2 text-sm hover:bg-red-700 disabled:opacity-50"
-              >
+              <button onClick={() => { setRejectDocId(null); setRejectReason(''); }}
+                className="flex-1 border rounded-lg py-2 text-sm hover:bg-gray-50">Cancel</button>
+              <button disabled={!rejectReason.trim() || !!actionLoading} onClick={handleReject}
+                className="flex-1 bg-red-600 text-white rounded-lg py-2 text-sm hover:bg-red-700 disabled:opacity-50">
                 {actionLoading ? '...' : 'Confirm Reject'}
               </button>
             </div>
@@ -290,5 +216,13 @@ export default function ClientDetailPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function ClientDetailPage() {
+  return (
+    <Suspense fallback={<div className="p-6">Loading...</div>}>
+      <ClientDetail />
+    </Suspense>
   );
 }
