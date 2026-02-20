@@ -36,7 +36,7 @@ export class APIClient {
   }
 
   static async uploadDocument(year: number, formData: FormData) {
-    return api.post(`/users/client/tax-years/${year}/documents`, formData, {
+    return api.post(`/documents/tax-years/${year}/documents`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
   }

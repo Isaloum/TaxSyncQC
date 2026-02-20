@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getProfile, updateProfile } from '../controllers/client.controller';
+import { getProfile, updateProfile, getTaxYearCompleteness, updateTaxYearProfile } from '../controllers/client.controller';
 import { authenticateToken, requireRole } from '../middleware/auth';
 
 const router = Router();
@@ -9,5 +9,8 @@ router.use(requireRole('client'));
 
 router.get('/profile', getProfile);
 router.put('/profile', updateProfile);
+
+router.get('/tax-years/:year/completeness', getTaxYearCompleteness);
+router.put('/tax-years/:year/profile', updateTaxYearProfile);
 
 export default router;

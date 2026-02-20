@@ -50,6 +50,84 @@ export const getProfile = async (req: Request, res: Response) => {
   }
 };
 
+export const getTaxYearCompleteness = async (req: Request, res: Response) => {
+  try {
+    if (!req.user || req.user.role !== 'client') {
+      return res.status(403).json({ error: 'Clients only' });
+    }
+
+    const clientId = req.user.sub;
+    const year = parseInt(req.params.year);
+
+    if (isNaN(year)) {
+      return res.status(400).json({ error: 'Invalid year' });
+    }
+
+    let taxYear = await prisma.taxYear.findFirst({
+      where: { clientId, year },
+      include: { documents: true, validations: true },
+    });
+
+    if (!taxYear) {
+      taxYear = await prisma.taxYear.create({
+        data: { clientId, year },
+        include: { documents: true, validations: true },
+      });
+    }
+
+    return res.json({
+      taxYear,
+      completenessScore: taxYear.completenessScore,
+      documents: taxYear.documents.map((d) => ({
+        id: d.id,
+        docType: d.docType,
+        filename: d.originalFilename,
+        uploadedAt: d.uploadedAt,
+        reviewStatus: d.reviewStatus,
+      })),
+    });
+  } catch (error) {
+    console.error('Get completeness error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const updateTaxYearProfile = async (req: Request, res: Response) => {
+  try {
+    if (!req.user || req.user.role !== 'client') {
+      return res.status(403).json({ error: 'Clients only' });
+    }
+
+    const clientId = req.user.sub;
+    const year = parseInt(req.params.year);
+    const { profile } = req.body;
+
+    if (isNaN(year) || !profile) {
+      return res.status(400).json({ error: 'Invalid year or profile data' });
+    }
+
+    let taxYear = await prisma.taxYear.findFirst({
+      where: { clientId, year },
+    });
+
+    if (!taxYear) {
+      taxYear = await prisma.taxYear.create({
+        data: { clientId, year, profile },
+      });
+    } else {
+      taxYear = await prisma.taxYear.update({
+        where: { id: taxYear.id },
+        data: { profile },
+      });
+    }
+
+    return res.json({ message: 'Profile saved', taxYear });
+  } catch (error) {
+    console.error('Update tax year profile error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 export const updateProfile = async (req: Request, res: Response) => {
   try {
     if (!req.user || req.user.role !== 'client') {
