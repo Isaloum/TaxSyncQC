@@ -60,6 +60,12 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: npx prisma generate
 
+      - name: Sync database schema
+        working-directory: backend
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: npx prisma db push --skip-generate
+
       - name: Build SAM application
         run: |
           cd backend

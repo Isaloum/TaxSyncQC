@@ -87,12 +87,16 @@ export class DocumentController {
         return res.status(403).json({ error: 'Unauthorized' });
       }
 
-      // Queue extraction + validate + notify
+      // Queue extraction + validate + notify (notify is non-fatal)
       await queueDocumentExtraction(documentId);
       await ValidationService.autoValidate(document.taxYearId);
-      await NotificationService.notifyDocumentUploaded(
-        clientId, document.docType, document.taxYear.year
-      );
+      try {
+        await NotificationService.notifyDocumentUploaded(
+          clientId, document.docType, document.taxYear.year
+        );
+      } catch (notifyErr) {
+        console.error('Notification error (non-fatal):', notifyErr);
+      }
 
       res.json({ document, message: 'Upload confirmed. Processing started.' });
     } catch (error: any) {
@@ -166,12 +170,12 @@ export class DocumentController {
       // Trigger validation after upload
       await ValidationService.autoValidate(taxYear.id);
 
-      // Send notification
-      await NotificationService.notifyDocumentUploaded(
-        clientId,
-        docType,
-        year
-      );
+      // Send notification (non-fatal)
+      try {
+        await NotificationService.notifyDocumentUploaded(clientId, docType, year);
+      } catch (notifyErr) {
+        console.error('Notification error (non-fatal):', notifyErr);
+      }
 
       res.status(201).json({ 
         document,
