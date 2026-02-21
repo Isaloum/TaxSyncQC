@@ -72,13 +72,16 @@ export class DocumentController {
    */
   static async confirmUpload(req: Request, res: Response) {
     try {
+      console.log('[confirm] start');
       const clientId = req.user!.sub;
       const { documentId } = req.params;
+      console.log('[confirm] lookup', documentId);
 
       const document = await prisma.document.findUnique({
         where: { id: documentId },
         include: { taxYear: true }
       });
+      console.log('[confirm] found', !!document);
 
       if (!document) {
         return res.status(404).json({ error: 'Document not found' });
@@ -87,19 +90,23 @@ export class DocumentController {
         return res.status(403).json({ error: 'Unauthorized' });
       }
 
-      // Queue extraction (non-fatal background tasks)
-      try { await queueDocumentExtraction(documentId); } catch (e) { console.error('Queue error:', e); }
-      try { await ValidationService.autoValidate(document.taxYearId); } catch (e) { console.error('Validation error:', e); }
+      // Non-fatal background tasks
+      try { await queueDocumentExtraction(documentId); } catch (e: any) { console.error('[confirm] queue:', e?.message); }
+      try { await ValidationService.autoValidate(document.taxYearId); } catch (e: any) { console.error('[confirm] validate:', e?.message); }
       try {
         await NotificationService.notifyDocumentUploaded(
           clientId, document.docType, document.taxYear.year
         );
-      } catch (e) { console.error('Notification error:', e); }
+      } catch (e: any) { console.error('[confirm] notify:', e?.message); }
 
+      console.log('[confirm] success');
       res.json({ document, message: 'Upload confirmed. Processing started.' });
     } catch (error: any) {
-      console.error('Confirm upload error:', error);
-      res.status(500).json({ error: error.message });
+      console.error('Confirm upload error:', error?.message, error?.stack);
+      res.status(500).json({
+        error: error?.message || 'Unknown error',
+        step: 'confirm_upload',
+      });
     }
   }
 
