@@ -87,16 +87,14 @@ export class DocumentController {
         return res.status(403).json({ error: 'Unauthorized' });
       }
 
-      // Queue extraction + validate + notify (notify is non-fatal)
-      await queueDocumentExtraction(documentId);
-      await ValidationService.autoValidate(document.taxYearId);
+      // Queue extraction (non-fatal background tasks)
+      try { await queueDocumentExtraction(documentId); } catch (e) { console.error('Queue error:', e); }
+      try { await ValidationService.autoValidate(document.taxYearId); } catch (e) { console.error('Validation error:', e); }
       try {
         await NotificationService.notifyDocumentUploaded(
           clientId, document.docType, document.taxYear.year
         );
-      } catch (notifyErr) {
-        console.error('Notification error (non-fatal):', notifyErr);
-      }
+      } catch (e) { console.error('Notification error:', e); }
 
       res.json({ document, message: 'Upload confirmed. Processing started.' });
     } catch (error: any) {
@@ -164,18 +162,10 @@ export class DocumentController {
         }
       });
 
-      // Queue for background processing
-      await queueDocumentExtraction(document.id);
-
-      // Trigger validation after upload
-      await ValidationService.autoValidate(taxYear.id);
-
-      // Send notification (non-fatal)
-      try {
-        await NotificationService.notifyDocumentUploaded(clientId, docType, year);
-      } catch (notifyErr) {
-        console.error('Notification error (non-fatal):', notifyErr);
-      }
+      // Background tasks (all non-fatal)
+      try { await queueDocumentExtraction(document.id); } catch (e) { console.error('Queue error:', e); }
+      try { await ValidationService.autoValidate(taxYear.id); } catch (e) { console.error('Validation error:', e); }
+      try { await NotificationService.notifyDocumentUploaded(clientId, docType, year); } catch (e) { console.error('Notify error:', e); }
 
       res.status(201).json({ 
         document,
