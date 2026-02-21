@@ -110,11 +110,75 @@ export default function TaxYearClient() {
                 onChange={(e) => setDocType(e.target.value)}
                 className="w-full px-3 py-2 border rounded-lg"
               >
-                <option value="T4">T4 - Employment Income</option>
-                <option value="T5">T5 - Investment Income</option>
-                <option value="T2202">T2202 - Tuition</option>
-                <option value="RRSP">RRSP Contribution Receipt</option>
-                <option value="Other">Other</option>
+                <optgroup label="── Federal Slips ──">
+                  <option value="T4">T4 – Employment Income</option>
+                  <option value="T4A">T4A – Pension / Retirement / Other Income</option>
+                  <option value="T4A_P">T4A(P) – CPP / QPP Benefits</option>
+                  <option value="T4A_OAS">T4A(OAS) – Old Age Security</option>
+                  <option value="T4E">T4E – Employment Insurance (EI)</option>
+                  <option value="T4RSP">T4RSP – RRSP Income</option>
+                  <option value="T4RIF">T4RIF – RRIF Income</option>
+                  <option value="T5">T5 – Investment Income (Dividends / Interest)</option>
+                  <option value="T3">T3 – Trust / Mutual Fund Income</option>
+                  <option value="T5008">T5008 – Securities Transactions</option>
+                  <option value="T5013">T5013 – Partnership Income</option>
+                  <option value="T2202">T2202 – Tuition Certificate</option>
+                  <option value="T1007">T1007 – Workers Compensation</option>
+                </optgroup>
+                <optgroup label="── Quebec RL Slips ──">
+                  <option value="RL1">RL-1 – Employment &amp; Other Income (Quebec)</option>
+                  <option value="RL2">RL-2 – Retirement / Pension Income</option>
+                  <option value="RL3">RL-3 – Investment Income</option>
+                  <option value="RL5">RL-5 – Benefits &amp; Allocations</option>
+                  <option value="RL6">RL-6 – Dividends from Quebec Companies</option>
+                  <option value="RL8">RL-8 – Tuition (Quebec)</option>
+                  <option value="RL10">RL-10 – EI &amp; QPIP Benefits</option>
+                  <option value="RL11">RL-11 – RRSP / RRIF Income</option>
+                  <option value="RL15">RL-15 – Professional / Self-Employment Income</option>
+                  <option value="RL16">RL-16 – Trust Income</option>
+                  <option value="RL22">RL-22 – Employee Benefits</option>
+                  <option value="RL24">RL-24 – Childcare Assistance</option>
+                  <option value="RL25">RL-25 – Amounts Paid to Residents of Canada</option>
+                  <option value="RL31">RL-31 – Rental Housing</option>
+                </optgroup>
+                <optgroup label="── Contributions &amp; Receipts ──">
+                  <option value="RRSP">RRSP Contribution Receipt</option>
+                  <option value="TFSA">TFSA Contribution Receipt</option>
+                  <option value="FHSA">FHSA – First Home Savings Account</option>
+                  <option value="HBP">HBP – Home Buyers&apos; Plan Repayment</option>
+                  <option value="LLP">LLP – Lifelong Learning Plan Repayment</option>
+                </optgroup>
+                <optgroup label="── Deductions &amp; Credits ──">
+                  <option value="Medical">Medical Expenses Receipts</option>
+                  <option value="Donations">Charitable Donation Receipts</option>
+                  <option value="Childcare">Childcare Receipts (Daycare / Babysitter)</option>
+                  <option value="Tuition">Tuition Receipts / Student Fees</option>
+                  <option value="Moving">Moving Expense Receipts</option>
+                  <option value="HomeOffice">Home Office Expenses</option>
+                  <option value="Union">Union / Professional Dues</option>
+                  <option value="Tools">Tradesperson&apos;s Tools</option>
+                </optgroup>
+                <optgroup label="── Self-Employment &amp; Business ──">
+                  <option value="BusinessIncome">Business / Self-Employment Income Statement</option>
+                  <option value="BusinessExpenses">Business Expense Receipts</option>
+                  <option value="T2125">T2125 – Business &amp; Professional Activities</option>
+                  <option value="T2042">T2042 – Farming Income</option>
+                  <option value="GST_HST">GST / HST / QST Return</option>
+                </optgroup>
+                <optgroup label="── Rental &amp; Capital Gains ──">
+                  <option value="RentalIncome">Rental Income / Expense Summary</option>
+                  <option value="T776">T776 – Statement of Real Estate Rentals</option>
+                  <option value="CapitalGains">Capital Gains / Losses Statement</option>
+                  <option value="ACB">Adjusted Cost Base (ACB) Report</option>
+                </optgroup>
+                <optgroup label="── Other ──">
+                  <option value="ForeignIncome">Foreign Income / Assets (T1135)</option>
+                  <option value="SocialAssistance">Social Assistance / Welfare Statement</option>
+                  <option value="WorkersComp">Workers&apos; Compensation Statement</option>
+                  <option value="DisabilityTaxCredit">Disability Tax Credit Certificate (T2201)</option>
+                  <option value="ID">Government ID / SIN Card</option>
+                  <option value="Other">Other Document</option>
+                </optgroup>
               </select>
             </div>
             <div>
