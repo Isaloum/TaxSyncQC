@@ -12,7 +12,7 @@ export default function ClientDashboard() {
   const loadProfile = async () => {
     try {
       const res = await APIClient.getProfile();
-      setProfile(res.data);
+      setProfile(res.data.client);
     } catch (error) {
       router.push('/login');
     } finally {
