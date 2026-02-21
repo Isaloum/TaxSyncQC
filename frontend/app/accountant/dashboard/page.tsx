@@ -37,6 +37,8 @@ export default function AccountantDashboard() {
 
   useEffect(() => {
     loadClients();
+    const timeout = setTimeout(() => setLoading(false), 10000);
+    return () => clearTimeout(timeout);
   }, []);
 
   const loadClients = async () => {
@@ -45,6 +47,7 @@ export default function AccountantDashboard() {
       setClients(res.data.clients || []);
     } catch (error) {
       console.error('Load error:', error);
+      setClients([]);
     } finally {
       setLoading(false);
     }
