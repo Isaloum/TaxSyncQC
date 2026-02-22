@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { APIClient } from '@/lib/api-client';
 
@@ -225,6 +225,51 @@ const PROVINCE_NAMES: Record<string, string> = {
   SK: 'Saskatchewan', YT: 'Yukon',
 };
 
+// ─── Profile → required documents mapping ─────────────────────────────────────
+type CheckItem = { docType: string; label: string; provinces?: string[] };
+
+const PROFILE_DOCS: Record<string, CheckItem[]> = {
+  has_employment_income:  [
+    { docType: 'T4',  label: 'T4 – Employment Income' },
+    { docType: 'RL1', label: 'RL-1 – Employment Income', provinces: ['QC'] },
+  ],
+  has_self_employment: [
+    { docType: 'BusinessIncome', label: 'Business Income Summary' },
+    { docType: 'RL15', label: 'RL-15 – Self-Employment Income', provinces: ['QC'] },
+  ],
+  has_investment_income: [
+    { docType: 'T5',  label: 'T5 – Investment Income' },
+    { docType: 'T3',  label: 'T3 – Trust / Mutual Fund Income' },
+    { docType: 'RL3', label: 'RL-3 – Investment Income', provinces: ['QC'] },
+  ],
+  has_rental_income:       [{ docType: 'RentalIncome',     label: 'Rental Income & Expense Statement' }],
+  has_rrsp_contributions:  [{ docType: 'RRSP_Receipt',     label: 'RRSP Contribution Receipt' }],
+  has_childcare_expenses:  [
+    { docType: 'ChildcareReceipts', label: 'Childcare Receipts' },
+    { docType: 'RL24', label: 'RL-24 – Childcare Assistance', provinces: ['QC'] },
+  ],
+  has_tuition: [
+    { docType: 'T2202', label: 'T2202 – Tuition Certificate' },
+    { docType: 'RL8',   label: 'RL-8 – Tuition (Quebec)',     provinces: ['QC'] },
+  ],
+  has_medical_expenses:    [{ docType: 'MedicalReceipts',   label: 'Medical / Dental Receipts' }],
+  has_donations:           [{ docType: 'DonationReceipt',   label: 'Charitable Donation Receipts' }],
+  claims_home_office:      [{ docType: 'HomeOfficeExpenses', label: 'Home Office Expense Records (T2200 / T777)' }],
+  has_moving_expenses:     [{ docType: 'MovingExpenses',    label: 'Moving Expense Receipts' }],
+};
+
+function buildChecklist(profile: any, province: string, uploadedTypes: Set<string>) {
+  const items: { docType: string; label: string; uploaded: boolean }[] = [];
+  for (const [key, docs] of Object.entries(PROFILE_DOCS)) {
+    if (!profile?.[key]) continue;
+    for (const doc of docs) {
+      if (doc.provinces && !doc.provinces.includes(province)) continue;
+      items.push({ docType: doc.docType, label: doc.label, uploaded: uploadedTypes.has(doc.docType) });
+    }
+  }
+  return items;
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function TaxYearClient() {
   const params  = useParams();
@@ -237,6 +282,7 @@ export default function TaxYearClient() {
   const [docType,      setDocType]      = useState('T4');
   const [province,     setProvince]     = useState('QC');
   const [toast,        setToast]        = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
     setToast({ msg, type });
@@ -280,6 +326,7 @@ export default function TaxYearClient() {
       if (!uploadRes.ok) throw new Error(`Storage upload failed: ${uploadRes.status}`);
       await APIClient.confirmUpload(documentId);
       setSelectedFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
       showToast(`${docType} uploaded successfully!`);
       loadCompleteness();
     } catch (error: any) {
@@ -306,6 +353,19 @@ export default function TaxYearClient() {
   );
 
   const docGroups = getDocGroups(province);
+
+  // Build required-doc checklist from profile + uploaded docs
+  const profile       = completeness?.taxYear?.profile;
+  const uploadedDocs  = completeness?.documents ?? [];
+  const uploadedTypes = new Set<string>(uploadedDocs.map((d: any) => d.docType));
+  const checklist     = buildChecklist(profile, province, uploadedTypes);
+  const doneCount     = checklist.filter(i => i.uploaded).length;
+  const totalCount    = checklist.length;
+  const frontendScore = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
+
+  // Any extra documents uploaded that aren't on the required checklist
+  const requiredTypes  = new Set(checklist.map(i => i.docType));
+  const extraDocs      = uploadedDocs.filter((d: any) => !requiredTypes.has(d.docType));
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -407,6 +467,7 @@ export default function TaxYearClient() {
               <div>
                 <label className="block text-sm font-medium mb-2">Select File</label>
                 <input
+                  ref={fileInputRef}
                   type="file"
                   onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
                   className="w-full px-3 py-2 border rounded-lg"
@@ -425,64 +486,97 @@ export default function TaxYearClient() {
           </div>
         )}
 
-        {/* ── Uploaded documents list ─────────────────────────────────── */}
-        {completeness && (
+        {/* ── Document checklist ──────────────────────────────────────── */}
+        {hasProfile && completeness && (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mt-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold">Documents</h2>
-              <span className="text-sm font-semibold text-blue-600">{completeness.completenessScore}% complete</span>
-            </div>
-            <div className="w-full bg-gray-100 rounded-full h-2 mb-5">
-              <div className="bg-blue-600 h-2 rounded-full transition-all" style={{ width: `${completeness.completenessScore}%` }} />
-            </div>
 
-            {completeness.documents && completeness.documents.length > 0 ? (
-              <ul className="space-y-2">
-                {completeness.documents.map((doc: any, idx: number) => (
-                  <li key={idx} className="flex items-center justify-between bg-gray-50 border border-gray-100 p-3 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      {/* Status icon */}
-                      {doc.reviewStatus === 'approved' ? (
-                        <span className="text-green-500">
-                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            {/* Header + progress */}
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-xl font-bold">Required Documents</h2>
+              <span className={`text-sm font-bold ${frontendScore === 100 ? 'text-green-600' : 'text-blue-600'}`}>
+                {doneCount}/{totalCount} uploaded
+              </span>
+            </div>
+            <div className="w-full bg-gray-100 rounded-full h-2 mb-1">
+              <div
+                className={`h-2 rounded-full transition-all ${frontendScore === 100 ? 'bg-green-500' : 'bg-blue-600'}`}
+                style={{ width: `${frontendScore}%` }}
+              />
+            </div>
+            <p className="text-xs text-gray-400 mb-5">{frontendScore}% complete — based on your tax profile</p>
+
+            {/* Checklist */}
+            {checklist.length > 0 ? (
+              <ul className="space-y-2 mb-4">
+                {checklist.map((item, idx) => {
+                  const uploaded = uploadedDocs.find((d: any) => d.docType === item.docType);
+                  const status   = uploaded?.reviewStatus ?? null;
+                  return (
+                    <li key={idx} className={`flex items-center justify-between p-3 rounded-lg border ${
+                      item.uploaded ? 'bg-green-50 border-green-100' : 'bg-gray-50 border-gray-100'
+                    }`}>
+                      <div className="flex items-center gap-3">
+                        {/* Checkbox-style indicator */}
+                        {item.uploaded ? (
+                          <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                           </svg>
-                        </span>
-                      ) : doc.reviewStatus === 'rejected' ? (
-                        <span className="text-red-500">
-                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                          </svg>
-                        </span>
-                      ) : (
-                        <span className="text-green-400">
-                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                          </svg>
-                        </span>
-                      )}
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{doc.docType}</p>
-                        <p className="text-xs text-gray-400">{doc.filename}</p>
+                        ) : (
+                          <div className="w-5 h-5 rounded-full border-2 border-gray-300 flex-shrink-0" />
+                        )}
+                        <div>
+                          <p className={`text-sm font-medium ${item.uploaded ? 'text-green-800' : 'text-gray-700'}`}>{item.label}</p>
+                          {uploaded && <p className="text-xs text-gray-400">{uploaded.filename} · {new Date(uploaded.uploadedAt).toLocaleDateString()}</p>}
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-3">
+                      {/* Status badge */}
+                      {status === 'approved' && (
+                        <span className="text-xs bg-green-100 text-green-700 px-2.5 py-0.5 rounded-full font-medium">✓ Approved</span>
+                      )}
+                      {status === 'rejected' && (
+                        <span className="text-xs bg-red-100 text-red-700 px-2.5 py-0.5 rounded-full font-medium">✗ Needs correction</span>
+                      )}
+                      {status === 'pending' && (
+                        <span className="text-xs bg-green-50 text-green-600 px-2.5 py-0.5 rounded-full font-medium">✓ Received</span>
+                      )}
+                      {!item.uploaded && (
+                        <span className="text-xs bg-gray-100 text-gray-500 px-2.5 py-0.5 rounded-full">Missing</span>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className="text-sm text-gray-400 text-center py-4">No required documents identified from your profile.</p>
+            )}
+
+            {/* Extra docs not in checklist */}
+            {extraDocs.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Additional Documents</p>
+                <ul className="space-y-2">
+                  {extraDocs.map((doc: any, idx: number) => (
+                    <li key={idx} className="flex items-center justify-between bg-gray-50 border border-gray-100 p-3 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <svg className="w-5 h-5 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">{doc.docType}</p>
+                          <p className="text-xs text-gray-400">{doc.filename}</p>
+                        </div>
+                      </div>
                       <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${
                         doc.reviewStatus === 'approved' ? 'bg-green-100 text-green-700' :
                         doc.reviewStatus === 'rejected' ? 'bg-red-100 text-red-700' :
                         'bg-green-50 text-green-600'
                       }`}>
-                        {doc.reviewStatus === 'approved' ? '✓ Approved' :
-                         doc.reviewStatus === 'rejected' ? '✗ Needs correction' :
-                         '✓ Received'}
+                        {doc.reviewStatus === 'approved' ? '✓ Approved' : doc.reviewStatus === 'rejected' ? '✗ Needs correction' : '✓ Received'}
                       </span>
-                      <span className="text-xs text-gray-400">{new Date(doc.uploadedAt).toLocaleDateString()}</span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-gray-400 text-center py-6">No documents uploaded yet.</p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
           </div>
         )}
