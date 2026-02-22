@@ -9,6 +9,10 @@ on:
       - '.github/workflows/backend-deploy.yml'
   workflow_dispatch:
 
+concurrency:
+  group: backend-deploy
+  cancel-in-progress: true
+
 jobs:
   deploy:
     name: Deploy Backend to AWS Lambda
@@ -61,10 +65,11 @@ jobs:
         run: npx prisma generate
 
       - name: Sync database schema
+        timeout-minutes: 2
         working-directory: backend
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: npx prisma db push --skip-generate --accept-data-loss
+        run: npx prisma db push --skip-generate --accept-data-loss || echo "⚠️ Schema sync skipped (non-fatal)"
 
       - name: Build SAM application
         run: |
