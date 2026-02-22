@@ -75,38 +75,36 @@ export class DocumentController {
       console.log('[confirm] start');
       const clientId = req.user!.sub;
       const { documentId } = req.params;
-      console.log('[confirm] lookup', documentId);
+      console.log('[confirm] clientId:', clientId, 'documentId:', documentId);
 
-      const document = await prisma.document.findUnique({
-        where: { id: documentId },
-        include: { taxYear: true }
+      // Verify ownership with nested where (avoids JOIN, still checks clientId)
+      const doc = await prisma.document.findFirst({
+        where: { id: documentId, taxYear: { clientId } },
+        select: {
+          id: true,
+          docType: true,
+          taxYearId: true,
+          taxYear: { select: { year: true } },
+        },
       });
-      console.log('[confirm] found', !!document);
+      console.log('[confirm] doc:', doc ? 'found' : 'not found');
 
-      if (!document) {
-        return res.status(404).json({ error: 'Document not found' });
-      }
-      if (document.taxYear.clientId !== clientId) {
-        return res.status(403).json({ error: 'Unauthorized' });
+      if (!doc) {
+        return res.status(404).json({ error: 'Document not found or unauthorized' });
       }
 
       // Non-fatal background tasks
       try { await queueDocumentExtraction(documentId); } catch (e: any) { console.error('[confirm] queue:', e?.message); }
-      try { await ValidationService.autoValidate(document.taxYearId); } catch (e: any) { console.error('[confirm] validate:', e?.message); }
+      try { await ValidationService.autoValidate(doc.taxYearId); } catch (e: any) { console.error('[confirm] validate:', e?.message); }
       try {
-        await NotificationService.notifyDocumentUploaded(
-          clientId, document.docType, document.taxYear.year
-        );
+        await NotificationService.notifyDocumentUploaded(clientId, doc.docType, doc.taxYear.year);
       } catch (e: any) { console.error('[confirm] notify:', e?.message); }
 
-      console.log('[confirm] success');
-      res.json({ document, message: 'Upload confirmed. Processing started.' });
+      console.log('[confirm] done');
+      res.json({ success: true, documentId, message: 'Upload confirmed. Processing started.' });
     } catch (error: any) {
-      console.error('Confirm upload error:', error?.message, error?.stack);
-      res.status(500).json({
-        error: error?.message || 'Unknown error',
-        step: 'confirm_upload',
-      });
+      console.error('[confirm] FATAL:', error?.message, error?.stack);
+      res.status(500).json({ error: error?.message || 'Unknown error', step: 'confirm_upload' });
     }
   }
 
